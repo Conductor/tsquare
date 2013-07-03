@@ -1,0 +1,11 @@
+{
+	"hbase": {
+		"zkquorum": "localhost",
+		"zkbasedir": "/hbase"
+	},
+
+	"tsdb": {
+		"table": "tsdb",
+		"uidtable": "tsdb-uid"
+	}
+}

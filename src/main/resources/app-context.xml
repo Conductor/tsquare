@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans default-lazy-init="true"
+	xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+						http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<context:annotation-config />
+	
+	<bean id="wildcardAggregators" class="net.opentsdb.contrib.tsquare.WildcardAggregatorFactory">
+		<property name="aggregatorsByWildcard">
+			<map>
+				<entry key="*.count">
+					<util:constant static-field="net.opentsdb.core.Aggregators.SUM"/>
+				</entry>
+				<entry key="*.events">
+					<util:constant static-field="net.opentsdb.core.Aggregators.SUM"/>
+				</entry>
+				<entry key="*.avg">
+					<util:constant static-field="net.opentsdb.core.Aggregators.AVG"/>
+				</entry>
+				<entry key="*.mrv">
+					<util:constant static-field="net.opentsdb.core.Aggregators.AVG"/>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean class="net.opentsdb.contrib.tsquare.CompositeAggregatorFactory" primary="true">
+		<property name="factoriesForMetricName" ref="wildcardAggregators" />
+	</bean>
+	
+	<bean id="hbaseClient" class="org.hbase.async.HBaseClient" scope="singleton">
+		<constructor-arg value="#{environment['hbase.zkquorum']}" />
+		<constructor-arg value="#{environment['hbase.zkbasedir']}" />
+	</bean>
+	
+	<bean id="tsdb" class="net.opentsdb.core.TSDB" scope="singleton">
+		<constructor-arg ref="hbaseClient" />
+		<constructor-arg value="#{environment['tsdb.table']}" />
+		<constructor-arg value="#{environment['tsdb.uidtable']}" />
+	</bean>
+	
+	<bean id="tsdbManager" class="net.opentsdb.core.ProvidedTsdbManager" scope="singleton">
+		<property name="tableName" value="#{environment['tsdb.table']}" />
+		<property name="uidTableName" value="#{environment['tsdb.uidtable']}" />
+	</bean>
+	
+</beans>
