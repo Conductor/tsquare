@@ -1,7 +1,10 @@
 TSquare
 =======
 
-TSquare is an HTTP-based API for use with OpenTSDB.
+TSquare is the Time Series Query Reporting and Exploration tool.  It offers an
+HTTP-based API for use with [OpenTSDB](http://opentsdb.net/).  In particular,
+TSquare includes (currently) limited support for Graphite's [render
+API](http://graphite.readthedocs.org/en/latest/render_api.html).
 
 
 Authors
