@@ -117,7 +117,7 @@ def displaySummaryInfo(String metricsRawJson, boolean prettyPrint) {
 	def parsedJson = slurper.parseText(metricsRawJson)
 
 	parsedJson.each() { seriesJson->
-	    println "${seriesJson.target} = ${seriesJson.summarizedValue}"
+	    println "${seriesJson.target}=${seriesJson.summarizedValue}"
 	}
     }
 }
@@ -276,7 +276,11 @@ if (!args) {
 }
 
 def opts = cli.parse(args)
-if (!opts || opts.help) {
+if (!opts) {
+    return
+}
+else if (opts.'help') {
+    cli.usage()
     return
 }
 
