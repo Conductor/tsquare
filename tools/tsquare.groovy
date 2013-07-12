@@ -33,8 +33,14 @@ import org.jfree.chart.*
 import org.jfree.chart.renderer.xy.SamplingXYLineRenderer
 import org.jfree.data.time.*
 
-def newGraphiteQueryEndpoint(String tsquareBaseUrl) {
-    return "${tsquareBaseUrl}/graphite/render"
+def printlnVerbose(message) {
+    if (VERBOSE) {
+	System.err.println message
+    }
+}
+
+def newExtendedQueryEndpoint(String tsquareBaseUrl) {
+    return "${tsquareBaseUrl}/ext/q"
 }
 
 def newGrepEndpoint(String tsquareBaseUrl) {
@@ -62,7 +68,7 @@ def displayGraph(String metricsRawJson, boolean samplingRenderer = true) {
 	    numDatapoints++
 
 	    series.add(
-		|new FixedMillisecond(TimeUnit.SECONDS.toMillis(point[1] as Long)),
+		new FixedMillisecond(TimeUnit.SECONDS.toMillis(point[1] as Long)),
 		point[0] as Double
 	    )
 	}
@@ -72,7 +78,7 @@ def displayGraph(String metricsRawJson, boolean samplingRenderer = true) {
 
     def summary = "${numInstruments} series with ${numDatapoints} total datapoints"
 
-    System.err.println "Found ${summary}."
+    printlnVerbose "Found ${summary}."
 
     def chart = ChartFactory.createTimeSeriesChart(
         null,
@@ -103,40 +109,59 @@ def displayGraph(String metricsRawJson, boolean samplingRenderer = true) {
     frame.show()
 }
 
+def displaySummaryInfo(String metricsRawJson, boolean prettyPrint) {
+    if (prettyPrint) {
+	println JsonOutput.prettyPrint(metricsRawJson)
+    } else {
+	def slurper = new JsonSlurper()
+	def parsedJson = slurper.parseText(metricsRawJson)
+
+	parsedJson.each() { seriesJson->
+	    println "${seriesJson.target} = ${seriesJson.summarizedValue}"
+	}
+    }
+}
+
 def handleQueryMode(cmdlineOpts) {
     def queryParams = []
-    queryParams << "format=json"
 
-    if (cmdlineOpts.'from') {
-	queryParams << "from=${cmdlineOpts.'from'}"
+    if (cmdlineOpts.'start') {
+	queryParams << "start=${cmdlineOpts.'start'}"
     }
     else {
 	// Default to 24 hours ago.
-	queryParams << "from=-24h"
+	queryParams << "start=-24h"
     }
 
-    if (cmdlineOpts.'until') {
-	queryParams << "until=${cmdlineOpts.'until'}"
+    if (cmdlineOpts.'end') {
+	queryParams << "end=${cmdlineOpts.'end'}"
     }
 
-    if (cmdlineOpts.'names') {
-	// Note that 'namess' is not a typo.  This handles the case where multiple
-	// --names arguments were given.  The 's' suffix has that effect.
-	cmdlineOpts.'namess'.each() { joinedName->
+    if (cmdlineOpts.'metrics') {
+	// Note that 'metricss' is not a typo.  This handles the case where multiple
+	// --metricss arguments were given.  The 's' suffix has that effect.
+	cmdlineOpts.'metricss'.each() { joinedName->
 	    joinedName.split(",").each() { name->
-		queryParams << "target=${name}"
+		queryParams << "m=${name}"
 	    }
 	}
     }
 
-    def urlString = newGraphiteQueryEndpoint(TSQUARE_BASEURL)
+    if (cmdlineOpts.'summarize' || cmdlineOpts.'summarize-pretty') {
+	queryParams << "summarize=true"
+    }
+
+    def urlString = newExtendedQueryEndpoint(TSQUARE_BASEURL)
     urlString += "?${queryParams.join("&")}"
     
     def url = new URL(urlString)
-    System.err.println url
+    printlnVerbose url
 
     if (cmdlineOpts.'raw') {
 	println url.text
+    }
+    else if (cmdlineOpts.'summarize' || cmdlineOpts.'summarize-pretty') {
+	displaySummaryInfo(url.text, cmdlineOpts.'summarize-pretty')
     }
     else if (cmdlineOpts.'graph') {
 	displayGraph(url.text, !cmdlineOpts.'no-sampling')
@@ -164,7 +189,7 @@ def handleSearchMode(cmdlineOpts) {
     urlString += "?${queryParams.join("&")}"
     
     def url = new URL(urlString)
-    System.err.println url
+    printlnVerbose url
 
     if (cmdlineOpts.'raw') {
 	println url.text
@@ -174,7 +199,7 @@ def handleSearchMode(cmdlineOpts) {
 	def json = slurper.parseText(url.text)
 
 	if (!json) {
-	    System.err.println "No results."
+	    printlnVerbose "No results."
 	}
 	else {
 	    def numResults = 0
@@ -185,7 +210,7 @@ def handleSearchMode(cmdlineOpts) {
 		numResults++
 	    }
 
-	    System.err.println "Found ${numResults} results."
+	    printlnVerbose "Found ${numResults} results."
 	}
     }
 }
@@ -196,8 +221,7 @@ def handleSearchMode(cmdlineOpts) {
 
 def cli = new CliBuilder(
     usage:"${this.class.simpleName} [--query | --search] [options]", 
-    header:"Query instruments service and return JSON.\n",
-    footer:"\nthis is the footer"
+    header:"Query instruments service and return JSON.\n"
 )
 
 cli.h(longOpt:"help", "Show help, which is what you are reading now.")
@@ -213,16 +237,25 @@ cli.r(longOpt:"regex",
 	"[search] Instead of searching by wildcard, which is the default default,"
 	+ " search using a regular expression.")
 
-cli.n(longOpt:"names", args:1, "fdasfasdfas")
+cli.m(longOpt:"metrics", args:1, "Metric names to search or query for.")
 
-cli.f(longOpt:"from", args:1, argName:"date/time expression",
+cli.f(longOpt:"start", args:1, argName:"date/time expression",
 	"[query] Defines the beginning time of the query; e.g. the start time."
 	+ " Can be given in absolute or relative form.  If unspecified, the default"
 	+ " is 24 hours ago.")
 
-cli.u(longOpt:"until", args:1, argName:"date/time expression",
+cli.u(longOpt:"end", args:1, argName:"date/time expression",
 	"[query] Defines the end time of the query. Can be given in absolute or"
 	+ " relative form.  if unspecified, the default is NOW.")
+
+cli._(longOpt:"summarize",
+	"[query] Return the results of the query as a single value per-metric."
+	+ " Note that the query results are summarized using whatever aggregator"
+	+ " you specified for each metric.")
+
+cli._(longOpt:"summarize-pretty",
+	"[query] Same as --summarize, but this option causes the output to be"
+	+ " pretty-printed JSON.")
 
 cli.g(longOpt:"graph", 
 	"[query] Graph the data points returned by the query.  NOTE: This command"
@@ -233,6 +266,9 @@ cli._(longOpt:"raw",
 
 cli._(longOpt:"no-sampling",
 	"When drawing the graph, do not sample input points.  Just draw them as given.")
+
+cli.V(longOpt:"verbose",
+	"Enable verbose output.  This gets written to standard error.")
 
 if (!args) {
     cli.usage()
@@ -257,6 +293,7 @@ if (baseUrl.endsWith("/")) {
     baseUrl = baseUrl.substring(0, baseUrl.size()-1)
 }
 
+VERBOSE = opts.'verbose'
 TSQUARE_BASEURL = baseUrl
 
 // Time our execution...
@@ -271,4 +308,4 @@ else {
 }
 
 def diffSeconds = ( System.currentTimeMillis() - startTs ) / 1000
-System.err.println "Done.  Execution took ${diffSeconds} seconds."
+printlnVerbose "Done.  Execution took ${diffSeconds} seconds."
