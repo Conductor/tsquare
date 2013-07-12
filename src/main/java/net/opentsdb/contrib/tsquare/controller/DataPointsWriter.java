@@ -17,6 +17,7 @@ package net.opentsdb.contrib.tsquare.controller;
 
 import java.io.IOException;
 
+import net.opentsdb.contrib.tsquare.Metric;
 import net.opentsdb.core.DataPoints;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -26,5 +27,5 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * @author James Royalty (jroyalty) <i>[Jun 26, 2013]</i>
  */
 interface DataPointsWriter {
-    void write(final DataPoints points, final JsonGenerator jsonObject) throws JsonGenerationException, IOException;
+    void write(Metric metric, DataPoints points, JsonGenerator jsonObject) throws JsonGenerationException, IOException;
 }

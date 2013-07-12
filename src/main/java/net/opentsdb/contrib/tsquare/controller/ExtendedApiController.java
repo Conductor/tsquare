@@ -28,7 +28,6 @@ import net.opentsdb.contrib.tsquare.Uid;
 import net.opentsdb.contrib.tsquare.UidQuery;
 import net.opentsdb.contrib.tsquare.support.ResponseStream;
 import net.opentsdb.contrib.tsquare.support.TsWebUtils;
-import net.opentsdb.core.Aggregator;
 import net.opentsdb.core.Query;
 
 import org.slf4j.Logger;
@@ -127,15 +126,9 @@ public class ExtendedApiController extends AbstractController {
             @RequestParam(required=true) String[] m,
             @RequestParam(required=true) String start,
             @RequestParam(required=false) String end,
-            @RequestParam(required=false) String single,
+            @RequestParam(required=false, defaultValue="false") boolean summarize,
             final WebRequest webRequest,
             final HttpServletResponse servletResponse) throws IOException {
-        
-        final Aggregator singleValueAgg;
-        if (!Strings.isNullOrEmpty(single)) {
-            singleValueAgg = getTsdbManager().getAggregatorFactory().getAggregatorByName(single);
-            Preconditions.checkNotNull(singleValueAgg, "Unknown aggregator: %s", single);
-        }
         
         final QueryDurationParams durationParams = handleGraphiteLikeDurations(start, end);
         if (log.isInfoEnabled()) {
@@ -144,16 +137,19 @@ public class ExtendedApiController extends AbstractController {
         
         // Prepare queries...
         final MetricParser parser = getTsdbManager().newMetricParser();
-        final List<Query> queries = Lists.newArrayListWithCapacity(m.length);
+        final List<QueryMetaData> queries = Lists.newArrayListWithCapacity(m.length);
         
         for (final String t : m) {
             final Query q = getTsdbManager().newMetricsQuery();
             durationParams.contributeToQuery(q);
             
             final Metric metric = parser.parseMetric(t);
+            if (summarize) {
+                Preconditions.checkState(metric.getAggregator() != null, "A metric-level aggregator is required when 'summarize' is enabled.  Metric: {}", t);
+            }
             metric.contributeToQuery(q);
             
-            queries.add(q);
+            queries.add(new QueryMetaData(metric, q));
             
             log.info("Added {} to query", metric);
         }
@@ -165,7 +161,11 @@ public class ExtendedApiController extends AbstractController {
         
         try {
             final JsonGenerator json = new JsonFactory().createJsonGenerator(out);
-            writeGraphiteLikeJsonFormat(queries, json, new GraphiteLikeDataPointsWriter(true, true), webRequest);
+            final GraphiteLikeDataPointsWriter writer = new GraphiteLikeDataPointsWriter()
+                .setIncludeAggregatedTags(true)
+                .setIncludeAllTags(true)
+                .setSummarize(summarize);
+            writeGraphiteLikeJsonFormat(queries, writer, json, webRequest);
             json.flush();
         } finally {
             Closeables.close(out, false);

@@ -18,6 +18,8 @@ package net.opentsdb.contrib.tsquare.controller;
 import java.io.IOException;
 import java.util.Map;
 
+import net.opentsdb.contrib.tsquare.Metric;
+import net.opentsdb.contrib.tsquare.support.DataPointsAsDoubles;
 import net.opentsdb.core.DataPoint;
 import net.opentsdb.core.DataPoints;
 
@@ -41,20 +43,20 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * @author James Royalty (jroyalty) <i>[Jun 26, 2013]</i>
  */
 class GraphiteLikeDataPointsWriter implements DataPointsWriter {
-    private boolean sumPoints = false;
+    private boolean summarize = false;
     private boolean includeAllTags = false;
     private boolean includeAggregatedTags = false;
     
+    /**
+     * Creates a writer that produces the Graphite format, without any
+     * extensions or extra data.
+     */
     public GraphiteLikeDataPointsWriter() {
     }
     
-    public GraphiteLikeDataPointsWriter(final boolean includeAggregatedTags, final boolean includeAllTags) {
-        this.includeAggregatedTags = includeAggregatedTags;
-        this.includeAllTags = includeAllTags;
-    }
-    
     @Override
-    public void write(final DataPoints points, final JsonGenerator jsonObject) throws JsonGenerationException, IOException {
+    public void write(final Metric metric, final DataPoints points, final JsonGenerator jsonObject) 
+            throws JsonGenerationException, IOException {
         jsonObject.writeStartObject();
         jsonObject.writeStringField("target", points.metricName());
         
@@ -77,22 +79,44 @@ class GraphiteLikeDataPointsWriter implements DataPointsWriter {
             jsonObject.writeEndArray();
         }
         
-        jsonObject.writeArrayFieldStart("datapoints");
+        if (summarize) {
+            final DataPointsAsDoubles doubles = new DataPointsAsDoubles(points);
+            final double aggValue = metric.getAggregator().runDouble(doubles);
+            jsonObject.writeNumberField("summarizedValue", aggValue);
+        } else {
+            jsonObject.writeArrayFieldStart("datapoints");
 
-        for (final DataPoint p : points) {
-            jsonObject.writeStartArray();
+            for (final DataPoint p : points) {
+                jsonObject.writeStartArray();
 
-            if (p.isInteger()) {
-                jsonObject.writeNumber(p.longValue());
-            } else {
-                jsonObject.writeNumber(p.doubleValue());
+                if (p.isInteger()) {
+                    jsonObject.writeNumber(p.longValue());
+                } else {
+                    jsonObject.writeNumber(p.doubleValue());
+                }
+
+                jsonObject.writeNumber(p.timestamp());
+                jsonObject.writeEndArray();
             }
 
-            jsonObject.writeNumber(p.timestamp());
             jsonObject.writeEndArray();
         }
         
-        jsonObject.writeEndArray();
         jsonObject.writeEndObject();
+    }
+
+    public GraphiteLikeDataPointsWriter setIncludeAllTags(boolean includeAllTags) {
+        this.includeAllTags = includeAllTags;
+        return this;
+    }
+
+    public GraphiteLikeDataPointsWriter setIncludeAggregatedTags(boolean includeAggregatedTags) {
+        this.includeAggregatedTags = includeAggregatedTags;
+        return this;
+    }
+
+    public GraphiteLikeDataPointsWriter setSummarize(boolean summarize) {
+        this.summarize = summarize;
+        return this;
     }
 }

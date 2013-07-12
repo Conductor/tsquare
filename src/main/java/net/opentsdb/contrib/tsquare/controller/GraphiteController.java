@@ -82,7 +82,7 @@ public class GraphiteController extends AbstractController {
         
         // Prepare queries...
         final MetricParser parser = getTsdbManager().newMetricParser();
-        final List<Query> queries = Lists.newArrayListWithCapacity(target.length);
+        final List<QueryMetaData> queries = Lists.newArrayListWithCapacity(target.length);
         for (final String t : target) {
             final Query q = getTsdbManager().newMetricsQuery();
             durationParams.contributeToQuery(q);
@@ -90,7 +90,7 @@ public class GraphiteController extends AbstractController {
             final Metric m = parser.parseMetric(t);
             m.contributeToQuery(q);
             
-            queries.add(q);
+            queries.add(new QueryMetaData(m, q));
             
             log.info("Added {} to query", m);
         }
@@ -100,7 +100,7 @@ public class GraphiteController extends AbstractController {
         try {
             stream = new ResponseStream(getDefaultResponseBufferSize());
             final JsonGenerator json = new JsonFactory().createJsonGenerator(stream);
-            writeGraphiteLikeJsonFormat(queries, json, GRAPHITE_DATA_POINTS_WRITER, webRequest);
+            writeGraphiteLikeJsonFormat(queries, GRAPHITE_DATA_POINTS_WRITER, json, webRequest);
             json.flush();
             stream.close();
             copyJsonToResponse(stream, servletResponse);

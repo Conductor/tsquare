@@ -26,7 +26,6 @@ import net.opentsdb.contrib.tsquare.DateTimeExpressionParser;
 import net.opentsdb.contrib.tsquare.TsdbManager;
 import net.opentsdb.contrib.tsquare.support.ResponseStream;
 import net.opentsdb.core.DataPoints;
-import net.opentsdb.core.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.context.request.WebRequest;
@@ -70,7 +69,7 @@ public abstract class AbstractController {
         return new QueryDurationParams(nowMillis, fromMillis, untilMillis);
     }
     
-    protected void writeGraphiteLikeJsonFormat(final Collection<Query> queries, final JsonGenerator json, final DataPointsWriter writer, final WebRequest webRequest) 
+    protected void writeGraphiteLikeJsonFormat(final Collection<QueryMetaData> queries, final DataPointsWriter writer, final JsonGenerator json, final WebRequest webRequest) 
             throws JsonGenerationException, IOException {
         // Generate a response wrapped in the provided JSONP wrapper?
         final boolean jsonpResponse = webRequest.getParameterMap().containsKey("jsonp");
@@ -87,13 +86,13 @@ public abstract class AbstractController {
         json.writeStartArray(); // START of response array
 
         // Write each series and data points...
-        for (final Query q : queries) {
+        for (final QueryMetaData qmeta : queries) {
             // TODO: Could dispatch these to a shared thread pool. 
             // Run them serially now.
-            final DataPoints[] series = q.run();
+            final DataPoints[] series = qmeta.getQuery().run();
             
             for (final DataPoints points : series) {
-                writer.write(points, json);
+                writer.write(qmeta.getMetric(), points, json);
             }
         }
 
