@@ -137,13 +137,12 @@ def handleQueryMode(cmdlineOpts) {
 	queryParams << "end=${cmdlineOpts.'end'}"
     }
 
-    if (cmdlineOpts.'metrics') {
-	// Note that 'metricss' is not a typo.  This handles the case where multiple
-	// --metricss arguments were given.  The 's' suffix has that effect.
-	cmdlineOpts.'metricss'.each() { joinedName->
-	    joinedName.split(",").each() { name->
-		queryParams << "m=${name}"
-	    }
+    // These are the metric names.  They may be separated by commas...
+    cmdlineOpts.getArgList().each() { arg->
+	println arg
+	arg.split(",").each() { name->
+	    queryParams << "m=${name}"
+	    printlnVerbose "Added metric name: ${name}"
 	}
     }
 
@@ -179,7 +178,8 @@ def handleSearchMode(cmdlineOpts) {
 	queryParams << "method=regex"
     }
 
-    // The search expression.
+    // The search expression.  We don't support searches for multiple
+    // expressions, so just take the first arg.
     def expression = cmdlineOpts.getArgList().first()
     assert expression
 
@@ -215,13 +215,58 @@ def handleSearchMode(cmdlineOpts) {
     }
 }
 
+def cli_footerText(def appName = this.class.simpleName) {
+"""
+------------
+Metric names
+------------
+
+Metric names are just strings, like:
+.
+.   hbase.regionserver.region
+.   mapred.jobtracker.occupied_map_slots
+.
+Along with each metric name you can also specify aggregation, 
+downsampling, and tag filtering.  The basic format for this is:
+.
+. AGG:[interval-DOWNSAMPLE:][rate:]metric[{tag1=value1[,tag2=value2...]}]
+.
+See [http://opentsdb.net/http-api.html#/q_Output_formats] for more info
+on the options that can be used with this format.  In addition to the 
+aggregators mentioned in that document, TSquare supports the concept of
+"auto" aggregation.  This means that TSquare will attempt to guess the
+appropriate aggregator for your metric.
+.
+--------
+Examples
+--------
+# Wildcard search for metrics...
+${appName} --search hbase.regionserver.*
+.
+# Time series JSON for number of Hbase regions over past 24 hours.
+${appName} hbase.regionserver.regions
+.
+# Graph the above results.
+${appName} --graph hbase.regionserver.regions
+.
+# Summarize to a single value.
+${appName} --summarize hbase.regionserver.regions
+"""
+}
+
 // ::-------------------------------------------------------------------------:: 
 // MAIN
 // ::-------------------------------------------------------------------------:: 
 
+def appName = this.class.simpleName
 def cli = new CliBuilder(
-    usage:"${this.class.simpleName} [--query | --search] [options]", 
-    header:"Query instruments service and return JSON.\n"
+    usage:"${appName} [--query | --search] [options] names...", 
+    header:"\nQUERY for time series data or SEARCH for metric meta data. The last"
+	+ " non-option arguments on the command-line are taken be to metric names"
+	+ " in the case of a QUERY or an expression in the case of a SEARCH."
+	+ " This utility uses the TSquare server pointed to by the TSQUARE_URL environment"
+	+ " variable.",
+    footer: cli_footerText()
 )
 
 cli.h(longOpt:"help", "Show help, which is what you are reading now.")
@@ -236,8 +281,6 @@ cli.options.addOptionGroup(modeGroup)
 cli.r(longOpt:"regex", 
 	"[search] Instead of searching by wildcard, which is the default default,"
 	+ " search using a regular expression.")
-
-cli.m(longOpt:"metrics", args:1, "Metric names to search or query for.")
 
 cli.f(longOpt:"start", args:1, argName:"date/time expression",
 	"[query] Defines the beginning time of the query; e.g. the start time."
@@ -265,7 +308,7 @@ cli._(longOpt:"raw",
 	"Print raw output, as returned by the web service, to standard output.")
 
 cli._(longOpt:"no-sampling",
-	"When drawing the graph, do not sample input points.  Just draw them as given.")
+	"[query] When drawing the graph, do not sample input points.  Just draw them as given.")
 
 cli.V(longOpt:"verbose",
 	"Enable verbose output.  This gets written to standard error.")
@@ -303,13 +346,19 @@ TSQUARE_BASEURL = baseUrl
 // Time our execution...
 def startTs = System.currentTimeMillis()
 
-if (opts.'search') {
-    handleSearchMode(opts)
-}
-else {
-    // Query mode is the default.
-    handleQueryMode(opts)
+// These commands all require "unparsed" args so validate that here.
+if (!opts.getArgList()) {
+    System.err.println "Name(s) arguments are required."
+    return 1
+} else {
+    if (opts.'search') {
+	handleSearchMode(opts)
+    }
+    else {
+	handleQueryMode(opts) // this is the default
+    }
 }
 
 def diffSeconds = ( System.currentTimeMillis() - startTs ) / 1000
 printlnVerbose "Done.  Execution took ${diffSeconds} seconds."
+return 0
