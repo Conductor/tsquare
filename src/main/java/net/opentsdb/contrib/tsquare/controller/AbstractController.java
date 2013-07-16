@@ -45,7 +45,7 @@ public abstract class AbstractController {
     private TsdbManager tsdbManager;
     private int defaultResponseBufferSize = 1024 * 1000;
     
-    protected QueryDurationParams handleGraphiteLikeDurations(final String fromDateTimeExpr, final String untilDateTimeExpr) {
+    protected QueryDurationParams parseDurations(final String fromDateTimeExpr, final String untilDateTimeExpr) {
         // Relative times are computed based on this NOW time.
         final long nowMillis = System.currentTimeMillis();
         

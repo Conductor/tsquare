@@ -130,7 +130,7 @@ public class ExtendedApiController extends AbstractController {
             final WebRequest webRequest,
             final HttpServletResponse servletResponse) throws IOException {
         
-        final QueryDurationParams durationParams = handleGraphiteLikeDurations(start, end);
+        final QueryDurationParams durationParams = parseDurations(start, end);
         if (log.isInfoEnabled()) {
             log.info("{}", durationParams);
         }

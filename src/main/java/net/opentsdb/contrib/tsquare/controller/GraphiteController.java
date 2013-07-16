@@ -75,7 +75,7 @@ public class GraphiteController extends AbstractController {
         // We only return JSON for integration with dashboard projects.
         Preconditions.checkArgument("json".equalsIgnoreCase(format), "Unsupported format: %s", format);
         
-        final QueryDurationParams durationParams = handleGraphiteLikeDurations(from, until);
+        final QueryDurationParams durationParams = parseDurations(from, until);
         if (log.isInfoEnabled()) {
             log.info("{}", durationParams);
         }
