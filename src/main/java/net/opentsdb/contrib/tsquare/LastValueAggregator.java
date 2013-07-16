@@ -20,7 +20,7 @@ import net.opentsdb.core.Aggregator;
 /**
  * @author James Royalty (jroyalty) <i>[Jun 26, 2013]</i>
  */
-public class LastValueAggregator implements Aggregator {
+public final class LastValueAggregator implements Aggregator {
     public static final String AGGREGATOR_NAME = "last";
     
     @Override
