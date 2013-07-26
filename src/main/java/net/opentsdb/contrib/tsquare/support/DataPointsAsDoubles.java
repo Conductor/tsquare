@@ -41,6 +41,6 @@ public class DataPointsAsDoubles implements Doubles {
 
     @Override
     public double nextDoubleValue() {
-        return iterator.next().doubleValue();
+        return iterator.next().toDouble();
     }
 }
