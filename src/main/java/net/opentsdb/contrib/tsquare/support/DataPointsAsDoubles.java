@@ -41,6 +41,7 @@ public class DataPointsAsDoubles implements Doubles {
 
     @Override
     public double nextDoubleValue() {
-        return iterator.next().toDouble();
+        final DataPoint point = iterator.next();
+        return TsWebUtils.asDouble(point);
     }
 }
