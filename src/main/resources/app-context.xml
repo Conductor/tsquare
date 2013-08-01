@@ -28,8 +28,60 @@
 		</property>
 	</bean>
 	
+	<bean id="providedNamedAggregators" class="net.opentsdb.contrib.tsquare.LookupNamedAggregatorFactory">
+		<property name="aggregators">
+			<map>
+				<entry key="sum">
+					<util:constant static-field="net.opentsdb.core.Aggregators.SUM"/>
+				</entry>
+				<entry key="min">
+					<util:constant static-field="net.opentsdb.core.Aggregators.MIN"/>
+				</entry>
+				<entry key="max">
+					<util:constant static-field="net.opentsdb.core.Aggregators.MAX"/>
+				</entry>
+				<entry key="avg">
+					<util:constant static-field="net.opentsdb.core.Aggregators.AVG"/>
+				</entry>
+				<entry key="dev">
+					<util:constant static-field="net.opentsdb.core.Aggregators.DEV"/>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+	<bean id="extendedNamedAggregators" class="net.opentsdb.contrib.tsquare.LookupNamedAggregatorFactory">
+		<property name="aggregators">
+			<map>
+				<entry key="last">
+					<bean class="net.opentsdb.contrib.tsquare.LastValueAggregator" />
+				</entry>
+				<entry key="pct90">
+					<bean class="net.opentsdb.contrib.tsquare.PercentileAggregator">
+						<constructor-arg value="90.0" />
+					</bean>
+				</entry>
+				<entry key="pct95">
+					<bean class="net.opentsdb.contrib.tsquare.PercentileAggregator">
+						<constructor-arg value="95.0" />
+					</bean>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
 	<bean class="net.opentsdb.contrib.tsquare.CompositeAggregatorFactory" primary="true">
-		<property name="factoriesForMetricName" ref="wildcardAggregators" />
+		<property name="factoriesForMetricName">
+			<set>
+				<ref bean="wildcardAggregators" />
+			</set>
+		</property>
+		<property name="factoriesForAggregatorName">
+			<set>
+				<ref bean="providedNamedAggregators" />
+				<ref bean="extendedNamedAggregators" />
+			</set>
+		</property>
 	</bean>
 	
 	<bean id="hbaseClient" class="org.hbase.async.HBaseClient" scope="singleton">
