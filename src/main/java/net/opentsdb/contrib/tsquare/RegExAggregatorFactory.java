@@ -28,11 +28,10 @@ import org.slf4j.LoggerFactory;
 /**
  * @author James Royalty (jroyalty) <i>[Jun 4, 2013]</i>
  */
-public class RegExAggregatorFactory extends AbstractAggregatorFactory {
+public class RegExAggregatorFactory implements MetricAggregatorFactory {
     private static final Logger log = LoggerFactory.getLogger(RegExAggregatorFactory.class);
     
     private Map<Pattern, Aggregator> aggregatorsByRegex = Collections.emptyMap();
-    
     
     @Override
     public Aggregator getAggregatorForMetric(final String metricName) {

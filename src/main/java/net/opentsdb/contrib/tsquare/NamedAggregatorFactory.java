@@ -15,10 +15,19 @@
  */
 package net.opentsdb.contrib.tsquare;
 
+import net.opentsdb.core.Aggregator;
+
 /**
- * Mix-in to unify by-name and by-metric aggregator lookup strategies.
- *
- * @author James Royalty (jroyalty) <i>[Jun 4, 2013]</i>
+ * Factory for {@link Aggregator}s, using the aggregator's name as a 
+ * lookup method.
+ * 
+ * @author James Royalty (jroyalty) <i>[Aug 1, 2013]</i>
  */
-public interface AggregatorFactory extends NamedAggregatorFactory, MetricAggregatorFactory {
+public interface NamedAggregatorFactory {
+    /**
+     * @param aggregatorName
+     * @return <code>null</code> if no aggregator is registered under
+     * the given name.
+     */
+    Aggregator getAggregatorByName(String aggregatorName);
 }

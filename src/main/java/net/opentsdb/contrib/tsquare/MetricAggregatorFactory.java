@@ -18,15 +18,17 @@ package net.opentsdb.contrib.tsquare;
 import net.opentsdb.core.Aggregator;
 
 /**
- * Base {@link AggregatorFactory} that requires the user to implement only
- * the lookup-by-metric functionality.  This class handles the lookup-by-aggregator
- * case.  By default, no aggregators-by-name are registered.
+ * Factory for {@link Aggregator}s, using the given metric's name as a 
+ * lookup method.  This allows you to auto-assign aggregators based (perhaps)
+ * on some pattern in the metric's name.
  * 
- * @author James Royalty (jroyalty) <i>[Jun 25, 2013]</i>
+ * @author James Royalty (jroyalty) <i>[Aug 1, 2013]</i>
  */
-public abstract class AbstractAggregatorFactory implements AggregatorFactory {
-    @Override
-    public final Aggregator getAggregatorByName(final String aggregatorName) {
-        return null;
-    }
+public interface MetricAggregatorFactory {
+    /**
+     * @param metricName
+     * @return <code>null</code> if no aggregator can be determined for the given
+     * metric name.
+     */
+    Aggregator getAggregatorForMetric(String metricName);
 }

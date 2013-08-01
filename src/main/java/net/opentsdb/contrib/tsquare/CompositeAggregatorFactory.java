@@ -16,26 +16,23 @@
 package net.opentsdb.contrib.tsquare;
 
 import java.util.Collections;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 import net.opentsdb.core.Aggregator;
-import net.opentsdb.core.Aggregators;
 
 /**
  * Allows for {@link AggregatorFactory}s by-name and by-metric to be composed and provide
- * a single lookup strategy.  By default, if no by-name factories are provided then all
- * objects from {@link Aggregators} are automatically added.
+ * a single lookup strategy.  
  * 
  * @author James Royalty (jroyalty) <i>[Jun 17, 2013]</i>
  */
 public class CompositeAggregatorFactory implements AggregatorFactory {
-    private Set<AggregatorFactory> factoriesForAggregatorName = Collections.emptySet();
-    private Set<AggregatorFactory> factoriesForMetricName = Collections.emptySet();
+    private Set<NamedAggregatorFactory> factoriesForAggregatorName = Collections.emptySet();
+    private Set<MetricAggregatorFactory> factoriesForMetricName = Collections.emptySet();
     
     @Override
     public Aggregator getAggregatorForMetric(final String metricName) {
-        for (final AggregatorFactory factory : factoriesForMetricName) {
+        for (final MetricAggregatorFactory factory : factoriesForMetricName) {
             final Aggregator agg = factory.getAggregatorForMetric(metricName);
             if (agg != null) {
                 return agg;
@@ -47,30 +44,21 @@ public class CompositeAggregatorFactory implements AggregatorFactory {
     
     @Override
     public Aggregator getAggregatorByName(final String aggregatorName) {
-        if (factoriesForAggregatorName.isEmpty()) {
-            try {
-                // TSDB maps to lower case names.
-                return Aggregators.get(aggregatorName.toLowerCase());
-            } catch (NoSuchElementException e) {
-                return null;
-            }
-        } else {
-            for (final AggregatorFactory factory : factoriesForMetricName) {
-                final Aggregator agg = factory.getAggregatorByName(aggregatorName);
-                if (agg != null) {
-                    return agg;
-                }
+        for (final NamedAggregatorFactory factory : factoriesForAggregatorName) {
+            final Aggregator agg = factory.getAggregatorByName(aggregatorName);
+            if (agg != null) {
+                return agg;
             }
         }
         
         return null;
     }
 
-    public void setFactoriesForAggregatorName(Set<AggregatorFactory> factoriesForAggregatorName) {
+    public void setFactoriesForAggregatorName(Set<NamedAggregatorFactory> factoriesForAggregatorName) {
         this.factoriesForAggregatorName = factoriesForAggregatorName;
     }
 
-    public void setFactoriesForMetricName(Set<AggregatorFactory> factoriesForMetric) {
+    public void setFactoriesForMetricName(Set<MetricAggregatorFactory> factoriesForMetric) {
         this.factoriesForMetricName = factoriesForMetric;
     }
 }

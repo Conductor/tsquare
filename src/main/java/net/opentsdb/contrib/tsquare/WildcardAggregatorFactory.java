@@ -27,7 +27,7 @@ import org.springframework.util.PatternMatchUtils;
 /**
  * @author James Royalty (jroyalty) <i>[Jun 4, 2013]</i>
  */
-public class WildcardAggregatorFactory extends AbstractAggregatorFactory {
+public class WildcardAggregatorFactory implements MetricAggregatorFactory {
     private static final Logger log = LoggerFactory.getLogger(WildcardAggregatorFactory.class);
     
     private Map<String, Aggregator> aggregatorsByWildcard = Collections.emptyMap();
