@@ -21,8 +21,6 @@ import net.opentsdb.core.Aggregator;
  * @author James Royalty (jroyalty) <i>[Jun 26, 2013]</i>
  */
 public final class LastValueAggregator implements Aggregator {
-    public static final String AGGREGATOR_NAME = "last";
-    
     @Override
     public long runLong(final Longs values) {
         long last = 0;
