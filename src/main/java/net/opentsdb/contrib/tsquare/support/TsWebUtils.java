@@ -18,6 +18,7 @@ package net.opentsdb.contrib.tsquare.support;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 
+import net.opentsdb.core.DataPoint;
 import net.opentsdb.uid.UniqueId;
 
 import org.hbase.async.Scanner;
@@ -48,6 +49,26 @@ public final class TsWebUtils {
     
     public static final String toString(final byte[] b) {
         return new String(b, CHARSET);
+    }
+    
+    public static final double asDouble(final DataPoint point) {
+        if (point.isInteger()) {
+            return (double) point.longValue();
+        } else {
+            return point.doubleValue();
+        }
+    }
+    
+    public static final Double asDoubleObject(final DataPoint point) {
+        final double value;
+        
+        if (point.isInteger()) {
+            value = (double) point.longValue();
+        } else {
+            value = point.doubleValue();
+        }
+        
+        return Double.valueOf(value);
     }
     
     /**
