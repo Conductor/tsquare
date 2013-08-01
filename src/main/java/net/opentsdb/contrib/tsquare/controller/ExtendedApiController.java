@@ -16,9 +16,8 @@
 package net.opentsdb.contrib.tsquare.controller;
 
 import java.io.IOException;
-import java.util.List;
+import java.io.OutputStream;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import net.opentsdb.contrib.tsquare.Metric;
@@ -26,8 +25,10 @@ import net.opentsdb.contrib.tsquare.MetricParser;
 import net.opentsdb.contrib.tsquare.QueryCallback;
 import net.opentsdb.contrib.tsquare.Uid;
 import net.opentsdb.contrib.tsquare.UidQuery;
-import net.opentsdb.contrib.tsquare.support.ResponseStream;
 import net.opentsdb.contrib.tsquare.support.TsWebUtils;
+import net.opentsdb.contrib.tsquare.web.AnnotatedDataQuery;
+import net.opentsdb.contrib.tsquare.web.DataQueryModel;
+import net.opentsdb.contrib.tsquare.web.view.GraphiteJsonResponseWriter;
 import net.opentsdb.core.Query;
 
 import org.slf4j.Logger;
@@ -43,7 +44,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 
 /**
@@ -89,10 +89,11 @@ public class ExtendedApiController extends AbstractController {
             query.includeKind(type);
         }
         
-        ResponseStream stream = null;
+        servletResponse.setContentType("application/json");
+        final OutputStream stream = servletResponse.getOutputStream();
+        final JsonGenerator json = new JsonFactory().createJsonGenerator(stream);
+        
         try {
-            stream = new ResponseStream(getDefaultResponseBufferSize());
-            final JsonGenerator json = new JsonFactory().createJsonGenerator(stream);
             json.writeStartArray();
             
             query.run(new QueryCallback<Uid>() {
@@ -109,10 +110,8 @@ public class ExtendedApiController extends AbstractController {
             
             json.writeEndArray();
             json.flush();
-            stream.close();
-            copyJsonToResponse(stream, servletResponse);
         } finally {
-            ResponseStream.releaseQuietly(stream);
+            Closeables.close(stream, false);
         }
     }
     
@@ -122,13 +121,12 @@ public class ExtendedApiController extends AbstractController {
     }
     
     @RequestMapping(value = "/q", method = RequestMethod.GET)
-    public void query(
+    public ModelAndView query(
             @RequestParam(required=true) String[] m,
             @RequestParam(required=true) String start,
             @RequestParam(required=false) String end,
             @RequestParam(required=false, defaultValue="false") boolean summarize,
-            final WebRequest webRequest,
-            final HttpServletResponse servletResponse) throws IOException {
+            final WebRequest webRequest) throws IOException {
         
         final QueryDurationParams durationParams = parseDurations(start, end);
         if (log.isInfoEnabled()) {
@@ -137,7 +135,8 @@ public class ExtendedApiController extends AbstractController {
         
         // Prepare queries...
         final MetricParser parser = getTsdbManager().newMetricParser();
-        final List<QueryMetaData> queries = Lists.newArrayListWithCapacity(m.length);
+        
+        final DataQueryModel model = new DataQueryModel();
         
         for (final String t : m) {
             final Query q = getTsdbManager().newMetricsQuery();
@@ -147,28 +146,19 @@ public class ExtendedApiController extends AbstractController {
             if (summarize) {
                 Preconditions.checkState(metric.getAggregator() != null, "A metric-level aggregator is required when 'summarize' is enabled.  Metric: {}", t);
             }
+            
             metric.contributeToQuery(q);
-            
-            queries.add(new QueryMetaData(metric, q));
-            
+            model.addQuery(new AnnotatedDataQuery(metric, q));
             log.info("Added {} to query", metric);
         }
         
-        servletResponse.setBufferSize(getDefaultResponseBufferSize());
-        servletResponse.setContentType("application/json");
+        final GraphiteJsonResponseWriter writer = new GraphiteJsonResponseWriter()
+            .setIncludeAggregatedTags(true)
+            .setIncludeAllTags(true)
+            .setSummarize(summarize);
         
-        ServletOutputStream out = servletResponse.getOutputStream();
+        model.setResponseWriter(writer);
         
-        try {
-            final JsonGenerator json = new JsonFactory().createJsonGenerator(out);
-            final GraphiteLikeDataPointsWriter writer = new GraphiteLikeDataPointsWriter()
-                .setIncludeAggregatedTags(true)
-                .setIncludeAllTags(true)
-                .setSummarize(summarize);
-            writeGraphiteLikeJsonFormat(queries, writer, json, webRequest);
-            json.flush();
-        } finally {
-            Closeables.close(out, false);
-        }
+        return model.toModelAndView();
     }
 }

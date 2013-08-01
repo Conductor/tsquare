@@ -16,13 +16,14 @@
 package net.opentsdb.contrib.tsquare.controller;
 
 import java.io.IOException;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
+import java.util.Set;
 
 import net.opentsdb.contrib.tsquare.Metric;
 import net.opentsdb.contrib.tsquare.MetricParser;
-import net.opentsdb.contrib.tsquare.support.ResponseStream;
+import net.opentsdb.contrib.tsquare.web.AnnotatedDataQuery;
+import net.opentsdb.contrib.tsquare.web.DataQueryModel;
+import net.opentsdb.contrib.tsquare.web.view.GraphiteJsonResponseWriter;
+import net.opentsdb.contrib.tsquare.web.view.GraphiteRawResponseWriter;
 import net.opentsdb.core.Query;
 
 import org.slf4j.Logger;
@@ -32,11 +33,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.ModelAndView;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jun 7, 2013]</i>
@@ -46,7 +46,7 @@ import com.google.common.collect.Lists;
 public class GraphiteController extends AbstractController {
     private static final Logger log = LoggerFactory.getLogger(GraphiteController.class);
     
-    private final static DataPointsWriter GRAPHITE_DATA_POINTS_WRITER = new GraphiteLikeDataPointsWriter();
+    private static final Set<String> VALID_FORMATS = Sets.newHashSet("json", "raw");
     
     /**
      * Implements portions of the Graphite Render URL API.  See http://graphite.readthedocs.org/en/latest/render_api.html
@@ -63,17 +63,16 @@ public class GraphiteController extends AbstractController {
      * @return
      */
     @RequestMapping(value = "/render", method=RequestMethod.GET)
-    public void render(
+    public ModelAndView render(
             @RequestParam(required=true) String[] target,
             @RequestParam(required=true) String from,
             @RequestParam(required=false) String until,
             @RequestParam(required=true) String format,
             @RequestParam(required=false) String noCache,
-            final WebRequest webRequest,
-            final HttpServletResponse servletResponse) throws IOException {
+            final WebRequest webReques) throws IOException {
         
         // We only return JSON for integration with dashboard projects.
-        Preconditions.checkArgument("json".equalsIgnoreCase(format), "Unsupported format: %s", format);
+        Preconditions.checkArgument(VALID_FORMATS.contains(format.toLowerCase()), "Unsupported format: %s", format);
         
         final QueryDurationParams durationParams = parseDurations(from, until);
         if (log.isInfoEnabled()) {
@@ -82,7 +81,8 @@ public class GraphiteController extends AbstractController {
         
         // Prepare queries...
         final MetricParser parser = getTsdbManager().newMetricParser();
-        final List<QueryMetaData> queries = Lists.newArrayListWithCapacity(target.length);
+        final DataQueryModel model = new DataQueryModel();
+        
         for (final String t : target) {
             final Query q = getTsdbManager().newMetricsQuery();
             durationParams.contributeToQuery(q);
@@ -90,22 +90,19 @@ public class GraphiteController extends AbstractController {
             final Metric m = parser.parseMetric(t);
             m.contributeToQuery(q);
             
-            queries.add(new QueryMetaData(m, q));
+            model.addQuery(new AnnotatedDataQuery(m, q));
             
             log.info("Added {} to query", m);
         }
         
-        ResponseStream stream = null;
-        
-        try {
-            stream = new ResponseStream(getDefaultResponseBufferSize());
-            final JsonGenerator json = new JsonFactory().createJsonGenerator(stream);
-            writeGraphiteLikeJsonFormat(queries, GRAPHITE_DATA_POINTS_WRITER, json, webRequest);
-            json.flush();
-            stream.close();
-            copyJsonToResponse(stream, servletResponse);
-        } finally {
-            ResponseStream.releaseQuietly(stream);
+        if ("json".equalsIgnoreCase(format)) {
+            model.setResponseWriter(new GraphiteJsonResponseWriter());
+        } else if ("raw".equalsIgnoreCase(format)) {
+            model.setResponseWriter(new GraphiteRawResponseWriter());
+        } else {
+            throw new IllegalStateException("Control should not reach this point without a valid output format.");
         }
+        
+        return model.toModelAndView();
     }
 }

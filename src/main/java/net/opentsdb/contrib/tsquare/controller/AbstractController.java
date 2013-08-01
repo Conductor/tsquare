@@ -15,27 +15,13 @@
  */
 package net.opentsdb.contrib.tsquare.controller;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-
 import net.opentsdb.contrib.tsquare.DateTimeExpressionParser;
 import net.opentsdb.contrib.tsquare.TsdbManager;
-import net.opentsdb.contrib.tsquare.support.ResponseStream;
-import net.opentsdb.core.DataPoints;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Strings;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jun 11, 2013]</i>
@@ -69,40 +55,6 @@ public abstract class AbstractController {
         return new QueryDurationParams(nowMillis, fromMillis, untilMillis);
     }
     
-    protected void writeGraphiteLikeJsonFormat(final Collection<QueryMetaData> queries, final DataPointsWriter writer, final JsonGenerator json, final WebRequest webRequest) 
-            throws JsonGenerationException, IOException {
-        // Generate a response wrapped in the provided JSONP wrapper?
-        final boolean jsonpResponse = webRequest.getParameterMap().containsKey("jsonp");
-        
-        if (jsonpResponse) {
-            final String jsonpValue = webRequest.getParameter("jsonp");
-            if (!Strings.isNullOrEmpty(jsonpValue)) {
-                json.writeRaw(jsonpValue);
-            }
-
-            json.writeRaw('('); // START of jsonp response wrapper.
-        }
-
-        json.writeStartArray(); // START of response array
-
-        // Write each series and data points...
-        for (final QueryMetaData qmeta : queries) {
-            // TODO: Could dispatch these to a shared thread pool. 
-            // Run them serially now.
-            final DataPoints[] series = qmeta.getQuery().run();
-            
-            for (final DataPoints points : series) {
-                writer.write(qmeta.getMetric(), points, json);
-            }
-        }
-
-        json.writeEndArray(); // END of response array
-
-        if (jsonpResponse) {
-            json.writeRaw(')'); // END of jsonp response wrapper.
-        }
-    }
-    
     /**
      * Render a JSON view using the given object.
      * 
@@ -115,28 +67,6 @@ public abstract class AbstractController {
         return mv;
     }
     
-    /**
-     * Writes the given stream to the response.  Does not close the {@link HttpServletResponse} output.
-     * 
-     * @param stream
-     * @param response
-     * @throws IOException
-     */
-    protected void copyJsonToResponse(final ResponseStream stream, final HttpServletResponse response) throws IOException {
-        response.setContentType("application/json");
-        response.setContentLength((int) stream.getNumBytesWritten());
-        InputStream from = null;
-        ServletOutputStream servletOut = null;
-        
-        try {
-            from = stream.getSupplier().getInput();
-            servletOut = response.getOutputStream();
-            ByteStreams.copy(from, servletOut);
-        } finally {
-            Closeables.close(from, true);
-        }
-    }
-
     /**
      * @return shared {@link TsdbManager} instance.
      */
