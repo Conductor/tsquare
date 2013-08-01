@@ -25,7 +25,7 @@ import com.google.common.base.Objects;
 /**
  * @author James Royalty (jroyalty) <i>[Jun 26, 2013]</i>
  */
-final class QueryDurationParams {
+public final class QueryDurationParams {
     private final long nowMillis;
     private final long fromMillis;
     private final long untilMillis;
