@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.opentsdb.contrib.tsquare.controller;
+package net.opentsdb.contrib.tsquare.web.controller;
 
 import java.io.IOException;
 import java.util.Set;
