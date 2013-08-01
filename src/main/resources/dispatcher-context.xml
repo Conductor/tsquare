@@ -15,7 +15,10 @@
 	
 	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver" />
 	
-	<!-- Larger requests are streamed, but for smaller requests we can use this JSON view. -->
+	<!-- Specialized view for streaming large data query responses. -->
+	<bean id="DataQueryView" class="net.opentsdb.contrib.tsquare.web.view.DataQueryView" />
+	
+	<!-- For smaller requests we can use this JSON view. -->
 	<bean id="jsonSingleObject" class="org.springframework.web.servlet.view.json.MappingJackson2JsonView">
 		<property name="modelKey" value="object" />
 		<!-- This prevents the resulting JSON from being prefixed with the model object's key. -->
