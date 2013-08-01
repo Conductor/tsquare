@@ -22,6 +22,7 @@ import net.opentsdb.contrib.tsquare.Metric;
 import net.opentsdb.contrib.tsquare.MetricParser;
 import net.opentsdb.contrib.tsquare.web.AnnotatedDataQuery;
 import net.opentsdb.contrib.tsquare.web.DataQueryModel;
+import net.opentsdb.contrib.tsquare.web.QueryDurationParams;
 import net.opentsdb.contrib.tsquare.web.view.GraphiteJsonResponseWriter;
 import net.opentsdb.contrib.tsquare.web.view.GraphiteRawResponseWriter;
 import net.opentsdb.core.Query;

@@ -28,6 +28,7 @@ import net.opentsdb.contrib.tsquare.UidQuery;
 import net.opentsdb.contrib.tsquare.support.TsWebUtils;
 import net.opentsdb.contrib.tsquare.web.AnnotatedDataQuery;
 import net.opentsdb.contrib.tsquare.web.DataQueryModel;
+import net.opentsdb.contrib.tsquare.web.QueryDurationParams;
 import net.opentsdb.contrib.tsquare.web.view.GraphiteJsonResponseWriter;
 import net.opentsdb.core.Query;
 

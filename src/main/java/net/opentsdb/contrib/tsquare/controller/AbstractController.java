@@ -17,6 +17,7 @@ package net.opentsdb.contrib.tsquare.controller;
 
 import net.opentsdb.contrib.tsquare.DateTimeExpressionParser;
 import net.opentsdb.contrib.tsquare.TsdbManager;
+import net.opentsdb.contrib.tsquare.web.QueryDurationParams;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.ModelAndView;
