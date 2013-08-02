@@ -37,6 +37,7 @@ public class Metric {
     private boolean rate;
     
     public Metric(final String rawMetric, final String name, final Aggregator aggregator) {
+        this.rawMetric = rawMetric;
         this.name = name;
         this.aggregator = aggregator;
         this.rate = false;
