@@ -30,6 +30,7 @@ import net.opentsdb.contrib.tsquare.web.AnnotatedDataQuery;
 import net.opentsdb.contrib.tsquare.web.DataQueryModel;
 import net.opentsdb.contrib.tsquare.web.QueryDurationParams;
 import net.opentsdb.contrib.tsquare.web.view.GraphiteJsonResponseWriter;
+import net.opentsdb.contrib.tsquare.web.view.SummarizedJsonResponseWriter;
 import net.opentsdb.core.Query;
 
 import org.slf4j.Logger;
@@ -123,11 +124,14 @@ public class ExtendedApiController extends AbstractController {
     
     @RequestMapping(value = "/q", method = RequestMethod.GET)
     public ModelAndView query(
-            @RequestParam(required=true) String[] m,
             @RequestParam(required=true) String start,
             @RequestParam(required=false) String end,
             @RequestParam(required=false, defaultValue="false") boolean summarize,
             final WebRequest webRequest) throws IOException {
+        
+        final String[] inputMetricNames = webRequest.getParameterValues("m");
+        Preconditions.checkArgument(inputMetricNames != null && inputMetricNames.length > 0,
+                "Input metric names are required.");
         
         final QueryDurationParams durationParams = parseDurations(start, end);
         if (log.isInfoEnabled()) {
@@ -139,7 +143,7 @@ public class ExtendedApiController extends AbstractController {
         
         final DataQueryModel model = new DataQueryModel();
         
-        for (final String t : m) {
+        for (final String t : inputMetricNames) {
             final Query q = getTsdbManager().newMetricsQuery();
             durationParams.contributeToQuery(q);
             
@@ -150,15 +154,24 @@ public class ExtendedApiController extends AbstractController {
             
             metric.contributeToQuery(q);
             model.addQuery(new AnnotatedDataQuery(metric, q));
-            log.info("Added {} to query", metric);
+            if (summarize) {
+                log.info("Added {} to query (w/ summary) ", metric);
+            } else {
+                log.info("Added {} to query ", metric);
+            }
+            
         }
         
-        final GraphiteJsonResponseWriter writer = new GraphiteJsonResponseWriter()
-            .setIncludeAggregatedTags(true)
-            .setIncludeAllTags(true)
-            .setSummarize(summarize);
-        
-        model.setResponseWriter(writer);
+        if (summarize) {
+            model.setResponseWriter(new SummarizedJsonResponseWriter());
+        } else {
+            final GraphiteJsonResponseWriter writer = new GraphiteJsonResponseWriter()
+                .setIncludeAggregatedTags(true)
+                .setIncludeAllTags(true)
+                .setSummarize(false);
+
+            model.setResponseWriter(writer);
+        }
         
         return model.toModelAndView();
     }
