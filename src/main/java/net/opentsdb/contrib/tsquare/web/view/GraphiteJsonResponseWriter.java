@@ -20,6 +20,7 @@ import java.util.Map;
 
 import net.opentsdb.contrib.tsquare.support.DataPointsAsDoubles;
 import net.opentsdb.contrib.tsquare.web.AnnotatedDataPoints;
+import net.opentsdb.core.Aggregators;
 import net.opentsdb.core.DataPoint;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -72,7 +73,7 @@ public class GraphiteJsonResponseWriter extends AbstractJsonResponseWriter imple
         
         if (summarize) {
             final DataPointsAsDoubles doubles = new DataPointsAsDoubles(annotatedPoints.getDataPoints());
-            final double aggValue = annotatedPoints.getMetric().getAggregator().runDouble(doubles);
+            final double aggValue = Aggregators.SUM.runDouble(doubles);
             jsonGenerator.writeNumberField("summarizedValue", aggValue);
         } else {
             jsonGenerator.writeArrayFieldStart("datapoints");
@@ -107,11 +108,6 @@ public class GraphiteJsonResponseWriter extends AbstractJsonResponseWriter imple
         getJsonGenerator(context).flush();
     }
     
-    @Override
-    public void close(ResponseContext context) {
-        // Do nothing.
-    }
-
     public GraphiteJsonResponseWriter setIncludeAllTags(boolean includeAllTags) {
         this.includeAllTags = includeAllTags;
         return this;

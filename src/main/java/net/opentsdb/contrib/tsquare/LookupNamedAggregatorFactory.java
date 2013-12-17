@@ -15,6 +15,7 @@
  */
 package net.opentsdb.contrib.tsquare;
 
+import java.util.Collections;
 import java.util.Map;
 
 import net.opentsdb.core.Aggregator;
@@ -25,13 +26,13 @@ import com.google.common.collect.Maps;
  * @author James Royalty (jroyalty) <i>[Aug 1, 2013]</i>
  */
 public class LookupNamedAggregatorFactory implements NamedAggregatorFactory {
-    private Map<String, Aggregator> aggregators;
+    private Map<String, Aggregator> aggregators = Collections.emptyMap();
     
     @Override
     public Aggregator getAggregatorByName(String aggregatorName) {
         return aggregators.get(aggregatorName.toLowerCase());
     }
-
+    
     public void setAggregators(Map<String, Aggregator> aggregatorsMap) {
         this.aggregators = Maps.newLinkedHashMap();
         

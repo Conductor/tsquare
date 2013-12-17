@@ -16,6 +16,7 @@
 package net.opentsdb.contrib.tsquare.web.view;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,22 +27,29 @@ import net.opentsdb.contrib.tsquare.web.AnnotatedDataQuery;
 import net.opentsdb.contrib.tsquare.web.DataQueryModel;
 import net.opentsdb.core.DataPoints;
 
-import org.springframework.web.servlet.View;
+import org.springframework.web.servlet.view.AbstractView;
+
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Range;
 
 /**
  * Special view for streaming query result data from a {@link DataQueryModel}.
  * 
  * @author James Royalty (jroyalty) <i>[Jul 31, 2013]</i>
  */
-public final class DataQueryView implements View {
+public final class DataQueryView extends AbstractView {
+    
     @Override
-    public void render(final Map<String, ?> modelMap, final HttpServletRequest request, final HttpServletResponse response) throws Exception {
+    protected void renderMergedOutputModel(final Map<String, Object> modelMap, final HttpServletRequest request, final HttpServletResponse response) throws Exception {
         final DataQueryModel modelObj = new DataQueryModel(modelMap);
         final DataQueryResponseWriter writer = modelObj.getResponseWriter();
         final ResponseContext context = new ResponseContext(request, response);
         
         if (writer instanceof SteppedSeriesWriter) {
             executeSteppedSeries((SteppedSeriesWriter) writer, modelObj, context);
+        } else if (writer instanceof GroupedSeriesWriter) {
+            executeGroupedSeries((GroupedSeriesWriter) writer, modelObj, context);
         } else if (writer instanceof SingleSeriesWriter) {
             executeSingleSeries((SingleSeriesWriter) writer, modelObj, context);
         } else {
@@ -50,19 +58,72 @@ public final class DataQueryView implements View {
     }
     
     private void executeSingleSeries(final SingleSeriesWriter singleSeriesWriter, final DataQueryModel modelObj, final ResponseContext context) throws IOException {
+        Exception ex = null;
+        
         try {
             singleSeriesWriter.beginResponse(context);
 
             for (final AnnotatedDataQuery dataQuery : modelObj.getQueries()) {
                 final DataPoints[] result = dataQuery.getQuery().run();
                 for (final DataPoints series : result) {
-                    singleSeriesWriter.write(new AnnotatedDataPoints(dataQuery.getMetric(), series), context);
+                    AnnotatedDataPoints annPoints = new AnnotatedDataPoints(
+                            dataQuery.getMetric(),
+                            Range.closed(dataQuery.getQuery().getStartTime(), dataQuery.getQuery().getEndTime()),
+                            series);
+                    
+                    singleSeriesWriter.write(annPoints, context);
                 }
             }
 
             singleSeriesWriter.endResponse(context);
+        } catch (IOException e) {
+            ex = e;
+            throw e;
+        } catch (RuntimeException e) {
+            ex = e;
+            throw e;
         } finally {
-            singleSeriesWriter.close(context);
+            if (ex != null) {
+                singleSeriesWriter.onError(context, ex);
+            }
+        }
+    }
+    
+    private void executeGroupedSeries(final GroupedSeriesWriter groupedSeriesWriter, final DataQueryModel modelObj, final ResponseContext context) throws IOException {
+        Exception ex = null;
+        
+        try {
+            groupedSeriesWriter.beginResponse(context);
+            
+            final Multimap<String, AnnotatedDataPoints> groups = LinkedListMultimap.create();
+
+            for (final AnnotatedDataQuery dataQuery : modelObj.getQueries()) {
+                final DataPoints[] result = dataQuery.getQuery().run();
+                for (final DataPoints series : result) {
+                    AnnotatedDataPoints points = new AnnotatedDataPoints(
+                            dataQuery.getMetric(), 
+                            Range.closed(dataQuery.getQuery().getStartTime(), dataQuery.getQuery().getEndTime()), 
+                            series);
+                    groups.put(series.metricName(), points);
+                }
+            }
+            
+            for (final String metricName : groups.keySet()) {
+                Collection<AnnotatedDataPoints> points = groups.get(metricName);
+                groupedSeriesWriter.write(points, context);
+            }
+
+            groupedSeriesWriter.endResponse(context);
+        } catch (IOException e) {
+            ex = e;
+            throw e;
+        } catch (RuntimeException e) {
+            ex = e;
+            throw e;
+        } finally {
+            if (ex != null) {
+                groupedSeriesWriter.onError(context, ex);
+            }
         }
     }
     

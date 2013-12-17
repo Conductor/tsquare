@@ -90,9 +90,10 @@ public class GraphiteRawResponseWriter implements SingleSeriesWriter {
     public void endResponse(final ResponseContext context) throws IOException {
         context.getResponse().getWriter().flush();
     }
-
+    
     @Override
-    public void close(final ResponseContext context) {
-        // Do nothing.
+    public void onError(ResponseContext context, Throwable ex) {
+        // TODO Auto-generated method stub
+        
     }
 }

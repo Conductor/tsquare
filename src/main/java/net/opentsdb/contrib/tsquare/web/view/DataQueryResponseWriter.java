@@ -25,5 +25,5 @@ public interface DataQueryResponseWriter {
     
     void endResponse(ResponseContext context) throws IOException;
     
-    void close(ResponseContext context);
+    void onError(ResponseContext context, Throwable ex);
 }
