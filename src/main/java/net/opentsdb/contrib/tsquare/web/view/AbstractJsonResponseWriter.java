@@ -18,19 +18,15 @@ package net.opentsdb.contrib.tsquare.web.view;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Strings;
+import com.google.common.io.Closeables;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jul 25, 2013]</i>
  */
 public abstract class AbstractJsonResponseWriter implements DataQueryResponseWriter {
-    private static final Logger log = LoggerFactory.getLogger(AbstractJsonResponseWriter.class);
-    
     private boolean jsonpAllowed = true;
     private String jsonpRequestParam = "jsonp";
     private String contentType = "application/json";
@@ -69,6 +65,12 @@ public abstract class AbstractJsonResponseWriter implements DataQueryResponseWri
         if (context.getProperty("isJsonpResponse", Boolean.FALSE, Boolean.class)) {
             jsonGenerator.writeRaw(')'); // END of jsonp response wrapper.
         }
+    }
+    
+    @Override
+    public void onError(final ResponseContext context, final Throwable ex) {
+        JsonGenerator json = getJsonGenerator(context);
+        Closeables.closeQuietly(json);
     }
     
     protected JsonGenerator getJsonGenerator(final ResponseContext context) {
