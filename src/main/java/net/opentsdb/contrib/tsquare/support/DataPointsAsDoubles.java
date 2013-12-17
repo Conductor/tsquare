@@ -21,6 +21,10 @@ import net.opentsdb.core.Aggregator.Doubles;
 import net.opentsdb.core.DataPoint;
 import net.opentsdb.core.DataPoints;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Range;
+
 /**
  * Wraps a {@link DataPoints} object and exposes the data consistent
  * with the {@link Doubles} interface.
@@ -29,9 +33,23 @@ import net.opentsdb.core.DataPoints;
  */
 public class DataPointsAsDoubles implements Doubles {
     private final Iterator<DataPoint> iterator;
+    private final Range<Long> timeRange;
     
     public DataPointsAsDoubles(final DataPoints points) {
         this.iterator = points.iterator();
+        this.timeRange = Range.all();
+    }
+    
+    public DataPointsAsDoubles(final DataPoints points, final Range<Long> withinTimeRange) {
+        this.timeRange = withinTimeRange;
+        
+        Predicate<DataPoint> pred = new Predicate<DataPoint>() {
+            public boolean apply(final DataPoint input) {
+                return timeRange.contains(input.timestamp());
+            }
+        };
+        
+        this.iterator = Iterators.filter(points.iterator(), pred);
     }
     
     @Override
