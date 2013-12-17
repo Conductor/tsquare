@@ -19,6 +19,8 @@ import net.opentsdb.contrib.tsquare.Metric;
 import net.opentsdb.contrib.tsquare.web.view.DataQueryResponseWriter;
 import net.opentsdb.core.DataPoints;
 
+import com.google.common.collect.Range;
+
 /**
  * Combines {@link Metric} and a given {@link DataPoints}.  This is used to
  * send query results to implementations of {@link DataQueryResponseWriter}.
@@ -30,9 +32,11 @@ import net.opentsdb.core.DataPoints;
 public class AnnotatedDataPoints {
     private Metric metric;
     private DataPoints dataPoints;
+    private Range<Long> queryRangeInSeconds;
     
-    public AnnotatedDataPoints(final Metric metric, final DataPoints dataPoints) {
+    public AnnotatedDataPoints(final Metric metric, final Range<Long> queryRangeInSeconds, final DataPoints dataPoints) {
         this.metric = metric;
+        this.queryRangeInSeconds = queryRangeInSeconds;
         this.dataPoints = dataPoints;
     }
 
@@ -42,5 +46,9 @@ public class AnnotatedDataPoints {
 
     public DataPoints getDataPoints() {
         return dataPoints;
+    }
+
+    public Range<Long> getQueryRangeInSeconds() {
+        return queryRangeInSeconds;
     }
 }
