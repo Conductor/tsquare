@@ -30,6 +30,7 @@ import net.opentsdb.contrib.tsquare.web.AnnotatedDataQuery;
 import net.opentsdb.contrib.tsquare.web.DataQueryModel;
 import net.opentsdb.contrib.tsquare.web.QueryDurationParams;
 import net.opentsdb.contrib.tsquare.web.view.GraphiteJsonResponseWriter;
+import net.opentsdb.contrib.tsquare.web.view.HighchartsSeriesResponseWriter;
 import net.opentsdb.contrib.tsquare.web.view.SummarizedJsonResponseWriter;
 import net.opentsdb.core.Query;
 
@@ -127,6 +128,7 @@ public class ExtendedApiController extends AbstractController {
             @RequestParam(required=true) String start,
             @RequestParam(required=false) String end,
             @RequestParam(required=false, defaultValue="false") boolean summarize,
+            @RequestParam(required=false, defaultValue="ts") String format,
             final WebRequest webRequest) throws IOException {
         
         final String[] inputMetricNames = webRequest.getParameterValues("m");
@@ -159,11 +161,12 @@ public class ExtendedApiController extends AbstractController {
             } else {
                 log.info("Added {} to query ", metric);
             }
-            
         }
-        
+
         if (summarize) {
             model.setResponseWriter(new SummarizedJsonResponseWriter());
+        } else if ("highcharts".equalsIgnoreCase(format)) {
+        	model.setResponseWriter(new HighchartsSeriesResponseWriter());
         } else {
             final GraphiteJsonResponseWriter writer = new GraphiteJsonResponseWriter()
                 .setIncludeAggregatedTags(true)
