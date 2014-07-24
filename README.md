@@ -52,6 +52,13 @@ Now you are ready to build TSquare, which builds as a .war file:
 
 The resulting artifact is:  **target/tsquare.war**
 
+**Building using Docker**
+
+We've included a Dockerfile that makes building TSqure really easy.  Assuming you already have [Docker](https://www.docker.com/) installed and running you can generate the WAR with two commands:
+
+    docker build -t="tsquare:v1" .
+    docker run -i -t tsquare:v1 > tsquare.war
+
 
 Running TSquare
 ---------------
