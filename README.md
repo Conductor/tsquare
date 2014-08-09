@@ -78,6 +78,7 @@ All contributors, sorted alphabetically:
 
 * Daniel Aquino (https://github.com/chino)
 * James Royalty (http://hackoeur.com/)
+* Christopher Tiwald (https://github.com/ctiwald)
 
 
 License
