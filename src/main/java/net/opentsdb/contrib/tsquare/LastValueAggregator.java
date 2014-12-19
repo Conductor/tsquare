@@ -16,6 +16,7 @@
 package net.opentsdb.contrib.tsquare;
 
 import net.opentsdb.core.Aggregator;
+import net.opentsdb.core.Aggregators.Interpolation;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jun 26, 2013]</i>
@@ -41,5 +42,10 @@ public final class LastValueAggregator implements Aggregator {
         }
         
         return last;
+    }
+
+    @Override
+    public Interpolation interpolationMethod() {
+        return Interpolation.ZIM;
     }
 }

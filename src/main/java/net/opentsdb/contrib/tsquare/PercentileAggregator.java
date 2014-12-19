@@ -16,13 +16,14 @@
 package net.opentsdb.contrib.tsquare;
 
 import net.opentsdb.core.Aggregator;
+import net.opentsdb.core.Aggregators.Interpolation;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import com.google.common.base.Preconditions;
 
 /**
- * Aggregator that computes a percentile.
+ * Aggregator that computes a percentile using a limited window size.
  * 
  * @author James Royalty (jroyalty) <i>[Aug 1, 2013]</i>
  */
@@ -69,5 +70,10 @@ public class PercentileAggregator implements Aggregator {
         }
         
         return stats.getPercentile(percentile);
+    }
+
+    @Override
+    public Interpolation interpolationMethod() {
+        return Interpolation.LERP;
     }
 }
