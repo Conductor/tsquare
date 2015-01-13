@@ -15,17 +15,17 @@
  */
 package net.opentsdb.contrib.tsquare.support;
 
-import java.lang.reflect.Field;
-import java.nio.charset.Charset;
-
-import net.opentsdb.core.DataPoint;
-import net.opentsdb.uid.UniqueId;
+import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.hbase.async.Scanner;
 import org.springframework.util.ReflectionUtils;
 
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import net.opentsdb.core.DataPoint;
+import net.opentsdb.core.TSDB;
+
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jun 18, 2013]</i>
@@ -35,7 +35,9 @@ public final class TsWebUtils {
     
     static {
         try {
-            Field f = ReflectionUtils.findField(UniqueId.class, "CHARSET");
+            // The CHARSET is defined on both TSDB and the UniqueId classes.
+            // They are the same as of 2.0.1 and we prefer the one on TSDB.
+            Field f = ReflectionUtils.findField(TSDB.class, "CHARSET");
             ReflectionUtils.makeAccessible(f);
             CHARSET = (Charset) f.get(null);
         } catch (Exception e) {
