@@ -15,7 +15,13 @@
  */
 package net.opentsdb.core;
 
-import java.lang.reflect.Field;
+import com.google.common.collect.ImmutableSet;
+
+import org.hbase.async.HBaseClient;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.ReflectionUtils;
 
 import net.opentsdb.contrib.tsquare.AggregatorFactory;
 import net.opentsdb.contrib.tsquare.ExtendedTsdbMetricParser;
@@ -24,27 +30,13 @@ import net.opentsdb.contrib.tsquare.TsdbManager;
 import net.opentsdb.contrib.tsquare.UidQuery;
 import net.opentsdb.uid.UniqueId;
 
-import org.hbase.async.HBaseClient;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ReflectionUtils;
-
-import com.google.common.collect.ImmutableSet;
+import java.lang.reflect.Field;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jun 7, 2013]</i>
  */
 public class ProvidedTsdbManager implements TsdbManager, InitializingBean, DisposableBean {
-//    private static final String METRICS_QUAL;
-//    private static final short METRICS_WIDTH;
-//    private static final String TAG_NAME_QUAL;
-//    private static final short TAG_NAME_WIDTH;
-//    private static final String TAG_VALUE_QUAL;
-//    private static final short TAG_VALUE_WIDTH;
-    
     private static final byte[] UID_ID_FAMILY;
-    private static final byte[] UID_NAME_FAMILY;
     
     @Autowired
     private TSDB tsdb;
@@ -52,9 +44,6 @@ public class ProvidedTsdbManager implements TsdbManager, InitializingBean, Dispo
     private HBaseClient hbaseClient;
     @Autowired
     private AggregatorFactory aggregatorFactory;
-    
-    private String tableName;
-    private String uidTableName;
     
     private ImmutableSet<String> knownUidKinds;
     
@@ -65,35 +54,9 @@ public class ProvidedTsdbManager implements TsdbManager, InitializingBean, Dispo
             // set-by-reflection stuff will break.
             Field f = null;
             
-            /*
-            f = ReflectionUtils.findField(TSDB.class, "METRICS_QUAL");
-            ReflectionUtils.makeAccessible(f);
-            METRICS_QUAL = (String) f.get(null);
-            f = ReflectionUtils.findField(TSDB.class, "METRICS_WIDTH");
-            ReflectionUtils.makeAccessible(f);
-            METRICS_WIDTH = f.getShort(null);
-            
-            f = ReflectionUtils.findField(TSDB.class, "TAG_NAME_QUAL");
-            ReflectionUtils.makeAccessible(f);
-            TAG_NAME_QUAL = (String) f.get(null);
-            f = ReflectionUtils.findField(TSDB.class, "TAG_NAME_WIDTH");
-            ReflectionUtils.makeAccessible(f);
-            TAG_NAME_WIDTH = f.getShort(null);
-            
-            f = ReflectionUtils.findField(TSDB.class, "TAG_VALUE_QUAL");
-            ReflectionUtils.makeAccessible(f);
-            TAG_VALUE_QUAL = (String) f.get(null);
-            f = ReflectionUtils.findField(TSDB.class, "TAG_VALUE_WIDTH");
-            ReflectionUtils.makeAccessible(f);
-            TAG_VALUE_WIDTH = f.getShort(null);
-            */
-            
             f = ReflectionUtils.findField(UniqueId.class, "ID_FAMILY");
             ReflectionUtils.makeAccessible(f);
             UID_ID_FAMILY = (byte[]) f.get(null);
-            f = ReflectionUtils.findField(UniqueId.class, "NAME_FAMILY");
-            ReflectionUtils.makeAccessible(f);
-            UID_NAME_FAMILY = (byte[]) f.get(null);
         } catch (Exception e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -116,7 +79,7 @@ public class ProvidedTsdbManager implements TsdbManager, InitializingBean, Dispo
     
     @Override
     public UidQuery newUidQuery() {
-        return new TsdbUidQuery(tsdb, uidTableName, UID_ID_FAMILY);
+        return new TsdbUidQuery(tsdb, UID_ID_FAMILY);
     }
     
     @Override
@@ -147,13 +110,5 @@ public class ProvidedTsdbManager implements TsdbManager, InitializingBean, Dispo
 
     public void setAggregatorFactory(AggregatorFactory aggregatorFactory) {
         this.aggregatorFactory = aggregatorFactory;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
-    public void setUidTableName(String uidTableName) {
-        this.uidTableName = uidTableName;
     }
 }
