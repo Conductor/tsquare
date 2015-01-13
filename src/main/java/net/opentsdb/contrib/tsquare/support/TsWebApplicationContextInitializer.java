@@ -15,20 +15,18 @@
  */
 package net.opentsdb.contrib.tsquare.support;
 
-import java.io.IOException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
+import net.opentsdb.utils.Config;
+
+import java.io.IOException;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jun 17, 2013]</i>
@@ -36,7 +34,9 @@ import com.google.common.base.Preconditions;
 public class TsWebApplicationContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
     private static final Logger log = LoggerFactory.getLogger(TsWebApplicationContextInitializer.class);
     
-    public static final String JSON_CONFIG_FILENAME = "tsquare_config.json";
+    private static final String CONFIG_FILENAME = "opentsdb.conf";
+    
+    public static final String PROPERTY_SOURCE_NAME = "TSDBCONF";
     
     /** Locations to search for override config file.  These are treated as {@link Resource} expressions.
      * Note that {@link #JSON_CONFIG_FILENAME} is appended directly to these locations, so make sure they
@@ -52,9 +52,7 @@ public class TsWebApplicationContextInitializer implements ApplicationContextIni
                 // User's home directory (for Tomcat this is like: /var/lib/tomcat6/conf)
                 String.format("file://%s/conf/", userHome),
                 // User's home directory.
-                String.format("file://%s/", userHome),
-                // System-wide TSDB install dir.
-                "file:///usr/local/share/opentsdb/"
+                String.format("file://%s/", userHome)
         };
     }
     
@@ -62,61 +60,36 @@ public class TsWebApplicationContextInitializer implements ApplicationContextIni
     public void initialize(final ConfigurableApplicationContext applicationContext) {
         final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(applicationContext.getClassLoader());
         
-        final JsonPropertySource defaultConfig = loadRequiredDefaultConfig(resolver);
-        applicationContext.getEnvironment().getPropertySources().addFirst(defaultConfig);
-        log.info("Default config is using {}", defaultConfig.getName());
-        
-        JsonPropertySource overrideConfig = null;
         try {
-            overrideConfig = loadOverrideConfig(resolver);
-            applicationContext.getEnvironment().getPropertySources().addBefore(defaultConfig.getName(), overrideConfig);
-            log.info("Override config is using {}", overrideConfig.getName());
-        } catch (Exception e) {
-            log.warn("Unable to load override config; will continue anyway.  Error: {}", e.getMessage());
-        }
-    }
-    
-    private JsonPropertySource loadRequiredDefaultConfig(final ResourcePatternResolver resolver) {
-        final String loc = String.format("classpath:%s", JSON_CONFIG_FILENAME);
-        final Resource res = resolver.getResource(loc);
-        Preconditions.checkState(res.exists(), "Unable to load default JSON config from %s", loc);
-        
-        try {
-            return newJsonPropertySource(res);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Unable to parse JSON in " + res.getDescription(), e);
+            final TsdbConfigPropertySource config = loadTsdbConfig(resolver);
+            log.info("Application config is using {}", config.getName());
+            applicationContext.getEnvironment().getPropertySources().addFirst(config);
         } catch (IOException e) {
-            throw new IllegalStateException("Unable to load JSON from " + res.getDescription(), e);
+            throw new BeanInitializationException("Unable to load a TSDB config file!", e);
         }
     }
     
-    private JsonPropertySource loadOverrideConfig(final ResourcePatternResolver resolver) throws JsonProcessingException, IOException {
+    private TsdbConfigPropertySource loadTsdbConfig(final ResourcePatternResolver resolver) throws IOException {
         Resource configResource = null;
         
         for (final String location : OVERRIDE_SEARCH_LOCATIONS) {
-            final String fullLoc = String.format("%s%s", location, JSON_CONFIG_FILENAME);
-            log.debug("Searching for config in {}", fullLoc);
+            final String fullLoc = String.format("%s%s", location, CONFIG_FILENAME);
+            log.debug("Searching for TSDB config in {}", fullLoc);
             
             final Resource res = resolver.getResource(fullLoc);
             if (res != null && res.exists()) {
                 configResource = res;
-                log.info("Found JSON config file using {} ", fullLoc);
+                log.info("Found TSDB config file using {} ", fullLoc);
                 break;
             }
         }
         
-        // This config is not required anyway.
         if (configResource == null) {
-            return null;
+            return new TsdbConfigPropertySource(PROPERTY_SOURCE_NAME, new Config(true));
+        } else if (configResource.isReadable()) {
+            return new TsdbConfigPropertySource(PROPERTY_SOURCE_NAME, new Config(configResource.getFile().getAbsolutePath()));
         } else {
-            return newJsonPropertySource(configResource);
+            throw new IllegalStateException("Unable to locate any TSDB config files!");
         }
-    }
-    
-    private JsonPropertySource newJsonPropertySource(final Resource resource) throws JsonProcessingException, IOException {
-        ObjectMapper mapper = TsWebUtils.newObjectMapper();
-        JsonNode root = mapper.readTree(resource.getURL());
-        JsonPropertySource ps = new JsonPropertySource(resource.getDescription(), root);
-        return ps;
     }
 }
