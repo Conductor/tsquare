@@ -47,7 +47,7 @@ public class SummarizedJsonResponseWriter extends AbstractJsonResponseWriter imp
                 }
             }
             
-            final DataPointsAsDoubles doubles = new DataPointsAsDoubles(dps.getDataPoints(), dps.getQueryRangeInSeconds());
+            final DataPointsAsDoubles doubles = new DataPointsAsDoubles(dps.getDataPoints(), dps.getQueryRangeInMillis());
             final double aggValue = aggregator.runDouble(doubles);
             summarizer.increment(aggValue);
         }

@@ -38,12 +38,10 @@ final class TsdbUidQuery implements UidQuery {
     private int maxNumRows = 1024;
     
     private final TSDB tsdb;
-    private final String tableName;
     private final byte[] columnFamily;
     
-    TsdbUidQuery(final TSDB tsdb, final String tableName, final byte[] columnFamily) {
+    TsdbUidQuery(final TSDB tsdb, final byte[] columnFamily) {
         this.tsdb = tsdb;
-        this.tableName = tableName;
         this.columnFamily = columnFamily;
         
         // Initially, we include only metrics.
@@ -52,7 +50,7 @@ final class TsdbUidQuery implements UidQuery {
     
     @Override
     public void run(final QueryCallback<Uid> callback) throws HBaseException {
-        final Scanner scanner = tsdb.client.newScanner(tableName);
+        final Scanner scanner = tsdb.client.newScanner(tsdb.uidTable());
         scanner.setFamily(columnFamily);
         scanner.setKeyRegexp(regex, TsWebUtils.CHARSET);
         

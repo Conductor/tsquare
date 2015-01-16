@@ -24,7 +24,7 @@ import com.google.common.collect.Range;
 /**
  * Combines {@link Metric} and a given {@link DataPoints}.  This is used to
  * send query results to implementations of {@link DataQueryResponseWriter}.
- * Keep in mind the semantics of {@link DataPoints} when holding a reference 
+ * Keep in mind the semantics of {@link DataPoints} when holdig a reference 
  * to this object.
  * 
  * @author James Royalty (jroyalty) <i>[Jul 29, 2013]</i>
@@ -32,11 +32,11 @@ import com.google.common.collect.Range;
 public class AnnotatedDataPoints {
     private Metric metric;
     private DataPoints dataPoints;
-    private Range<Long> queryRangeInSeconds;
+    private Range<Long> queryRangeInMillis;
     
-    public AnnotatedDataPoints(final Metric metric, final Range<Long> queryRangeInSeconds, final DataPoints dataPoints) {
+    public AnnotatedDataPoints(final Metric metric, final Range<Long> queryRangeInMillis, final DataPoints dataPoints) {
         this.metric = metric;
-        this.queryRangeInSeconds = queryRangeInSeconds;
+        this.queryRangeInMillis = queryRangeInMillis;
         this.dataPoints = dataPoints;
     }
 
@@ -48,7 +48,7 @@ public class AnnotatedDataPoints {
         return dataPoints;
     }
 
-    public Range<Long> getQueryRangeInSeconds() {
-        return queryRangeInSeconds;
+    public Range<Long> getQueryRangeInMillis() {
+        return queryRangeInMillis;
     }
 }

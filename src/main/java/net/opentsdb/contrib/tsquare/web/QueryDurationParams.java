@@ -15,12 +15,11 @@
  */
 package net.opentsdb.contrib.tsquare.web;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
+import com.google.common.base.Objects;
 
 import net.opentsdb.core.Query;
 
-import com.google.common.base.Objects;
+import java.util.Date;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jun 26, 2013]</i>
@@ -37,8 +36,8 @@ public final class QueryDurationParams {
     }
     
     public Query contributeToQuery(final Query query) {
-        query.setStartTime(TimeUnit.MILLISECONDS.toSeconds(fromMillis));
-        query.setEndTime(TimeUnit.MILLISECONDS.toSeconds(untilMillis));
+        query.setStartTime(fromMillis);
+        query.setEndTime(untilMillis);
         return query;
     }
     
