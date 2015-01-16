@@ -15,13 +15,13 @@
  */
 package net.opentsdb.contrib.tsquare.web.view;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Strings;
 import com.google.common.io.Closeables;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jul 25, 2013]</i>
@@ -36,7 +36,7 @@ public abstract class AbstractJsonResponseWriter implements DataQueryResponseWri
         context.getResponse().setContentType(contentType);
         
         final OutputStream out = context.getResponse().getOutputStream();
-        final JsonGenerator json = new JsonFactory().createJsonGenerator(out);
+        final JsonGenerator json = new JsonFactory().createGenerator(out);
         context.putProperty("jsonGenerator", json);
         
         // By default.
@@ -70,7 +70,11 @@ public abstract class AbstractJsonResponseWriter implements DataQueryResponseWri
     @Override
     public void onError(final ResponseContext context, final Throwable ex) {
         JsonGenerator json = getJsonGenerator(context);
-        Closeables.closeQuietly(json);
+        try {
+            Closeables.close(json, true);
+        } catch (IOException e) {
+            // Is swallowed above.
+        }
     }
     
     protected JsonGenerator getJsonGenerator(final ResponseContext context) {
