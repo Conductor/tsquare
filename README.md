@@ -2,7 +2,7 @@ TSquare
 =======
 
 TSquare is the *Time Series Query, Reporting and Exploration* tool.  It offers
-an extended HTTP-based API for use with [OpenTSDB v1.x](http://opentsdb.net/).
+an extended HTTP-based API for use with [OpenTSDB v2.0.x](http://opentsdb.net/).
 In particular, TSquare includes (currently) limited support for Graphite's
 [render API](http://graphite.readthedocs.org/en/latest/render_api.html).  Other
 features include:
@@ -14,7 +14,7 @@ features include:
   (e.g by regex and/or wildcard)
 * Extended metric query format that allows for default and auto-assigned
   aggregators (used in concert with the aggregator factory)
-* More aggregators (last value, N-th percentile)
+* Last value aggregator (which is going to be added to OpenTSDB v2.1)
 
 N.B. We wrote TSquare before OpenTSDB v2.x was available.  OpenTSDB v2 has an
 extended REST API itself, so you might notice some overlap in features.  It's
@@ -29,11 +29,11 @@ To build TSquare you'll need:
 
 * Java 1.6+ and
 * Maven 3.x 
-* OpenTSDB v1.x (see below)
+* OpenTSDB v2.0.x (see below)
 
-Because OpenTSDB v1.x is not in any public Maven repository you'll need to
-download and build it yourself.  Luckily, it's very easy.  Just follow the
-building instructions on their [getting started](http://opentsdb.net/getting-started.html) page.
+Because OpenTSDB is not in any public Maven repository you'll need to download
+and build it yourself.  Luckily, it's very easy.  Just follow the building
+instructions on their [Installation](http://opentsdb.net/docs/build/html/installation.html) page.
 
 At this point, you should have successfully built OpenTSDB.  The next step is
 to build it with Maven and install the artifact in your local Maven repository.
