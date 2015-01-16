@@ -15,9 +15,10 @@ RUN git clone git://github.com/OpenTSDB/opentsdb.git /usr/lib/opentsdb
 RUN cd /usr/lib/opentsdb && git checkout v1.1.0
 RUN cd /usr/lib/opentsdb && ./build.sh
 RUN cd /usr/lib/opentsdb/build && make pom.xml
-RUN cd /usr/lib/opentsdb/ && mvn -Dgpg.skip=true -Dmaven.repo.local=/root/.m2 clean install
+RUN cd /usr/lib/opentsdb/ && mvn -DskipTests=true -Dgpg.skip=true -Dmaven.repo.local=/root/.m2 clean install
 
 # Build tsquare
 RUN git clone https://github.com/Conductor/tsquare.git /usr/lib/tsquare
 RUN cd /usr/lib/tsquare && mvn -Dmaven.repo.local=/root/.m2 clean package
 CMD cat /usr/lib/tsquare/target/tsquare.war
+
