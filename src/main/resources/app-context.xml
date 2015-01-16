@@ -56,21 +56,6 @@
 				<entry key="last">
 					<bean class="net.opentsdb.contrib.tsquare.LastValueAggregator" />
 				</entry>
-				<entry key="pct50">
-					<bean class="net.opentsdb.contrib.tsquare.PercentileAggregator">
-						<constructor-arg value="50.0" />
-					</bean>
-				</entry>
-				<entry key="pct90">
-					<bean class="net.opentsdb.contrib.tsquare.PercentileAggregator">
-						<constructor-arg value="90.0" />
-					</bean>
-				</entry>
-				<entry key="pct95">
-					<bean class="net.opentsdb.contrib.tsquare.PercentileAggregator">
-						<constructor-arg value="95.0" />
-					</bean>
-				</entry>
 			</map>
 		</property>
 	</bean>
