@@ -15,7 +15,7 @@
  */
 package net.opentsdb.contrib.tsquare.web;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 import net.opentsdb.core.Query;
 
@@ -55,7 +55,7 @@ public final class QueryDurationParams {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
+        return MoreObjects.toStringHelper(this)
                 .add("now", new Date(nowMillis))
                 .add("from", new Date(fromMillis))
                 .add("until", new Date(untilMillis))
