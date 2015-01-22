@@ -30,6 +30,11 @@ public abstract class AbstractJsonResponseWriter implements DataQueryResponseWri
     private boolean jsonpAllowed = true;
     private String jsonpRequestParam = "jsonp";
     private String contentType = "application/json";
+    private final boolean millisecondResolution;
+    
+    protected AbstractJsonResponseWriter(final boolean millisecondResolution) {
+        this.millisecondResolution = millisecondResolution;
+    }
     
     @Override
     public void beginResponse(final ResponseContext context) throws IOException {
@@ -77,6 +82,10 @@ public abstract class AbstractJsonResponseWriter implements DataQueryResponseWri
         }
     }
     
+    public boolean isMillisecondResolution() {
+        return millisecondResolution;
+    }
+
     protected JsonGenerator getJsonGenerator(final ResponseContext context) {
         return context.getProperty("jsonGenerator", JsonGenerator.class);
     }

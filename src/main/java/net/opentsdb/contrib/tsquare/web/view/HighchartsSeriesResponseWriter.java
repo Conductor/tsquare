@@ -12,6 +12,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * @author James Royalty (jroyalty) <i>[Jan 19, 2014]</i>
  */
 public class HighchartsSeriesResponseWriter extends AbstractJsonResponseWriter implements SingleSeriesWriter {
+    public HighchartsSeriesResponseWriter(final boolean millisecondResolution) {
+        super(millisecondResolution);
+    }
+    
     @Override
     public void beginResponse(ResponseContext context) throws IOException {
         super.beginResponse(context);
@@ -32,8 +36,11 @@ public class HighchartsSeriesResponseWriter extends AbstractJsonResponseWriter i
         for (final DataPoint p : annotatedPoints.getDataPoints()) {
             jsonGenerator.writeStartArray();
             
-            final long millis = TimeUnit.SECONDS.toMillis(p.timestamp());
-            jsonGenerator.writeNumber(millis);
+            if (isMillisecondResolution()) {
+                jsonGenerator.writeNumber(p.timestamp());
+            } else {
+                jsonGenerator.writeNumber(TimeUnit.MILLISECONDS.toSeconds(p.timestamp()));
+            }
 
             if (p.isInteger()) {
                 jsonGenerator.writeNumber(p.longValue());

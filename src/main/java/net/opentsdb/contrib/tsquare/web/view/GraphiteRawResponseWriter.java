@@ -18,6 +18,7 @@ package net.opentsdb.contrib.tsquare.web.view;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import net.opentsdb.contrib.tsquare.support.TsWebUtils;
 import net.opentsdb.contrib.tsquare.web.AnnotatedDataPoints;
@@ -53,7 +54,8 @@ public class GraphiteRawResponseWriter implements SingleSeriesWriter {
         final List<Double> values = Lists.newArrayListWithCapacity(points.size());
         
         for (final DataPoint p : points) {
-            final long currentTimestamp = p.timestamp();
+            // Graphite timestamp are always in seconds.
+            final long currentTimestamp = TimeUnit.MILLISECONDS.toSeconds(p.timestamp());
             
             // Find the max/min timestamps; we need this for part of the raw response.
             maxTimestamp = Math.max(maxTimestamp, currentTimestamp);
@@ -70,7 +72,7 @@ public class GraphiteRawResponseWriter implements SingleSeriesWriter {
                 }
             }
             
-            lastTimestamp = p.timestamp();
+            lastTimestamp = currentTimestamp;
             values.add(TsWebUtils.asDoubleObject(p));
         }
         
@@ -94,6 +96,5 @@ public class GraphiteRawResponseWriter implements SingleSeriesWriter {
     @Override
     public void onError(ResponseContext context, Throwable ex) {
         // TODO Auto-generated method stub
-        
     }
 }
