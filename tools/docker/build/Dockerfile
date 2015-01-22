@@ -10,9 +10,8 @@ RUN echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true 
 RUN apt-get install -y oracle-java7-installer oracle-java7-set-default
 
 # Build opentsdb and install its mvn artifacts.
-# Note: This will take a while. OpenTSDB has quite a few tests.
+# Note: We skip tests as we are building from master which is presumably stable.
 RUN git clone git://github.com/OpenTSDB/opentsdb.git /usr/lib/opentsdb
-RUN cd /usr/lib/opentsdb && git checkout v1.1.0
 RUN cd /usr/lib/opentsdb && ./build.sh
 RUN cd /usr/lib/opentsdb/build && make pom.xml
 RUN cd /usr/lib/opentsdb/ && mvn -DskipTests=true -Dgpg.skip=true -Dmaven.repo.local=/root/.m2 clean install
