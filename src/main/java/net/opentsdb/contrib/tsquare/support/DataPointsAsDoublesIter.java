@@ -21,8 +21,6 @@ import net.opentsdb.core.Aggregator.Doubles;
 import net.opentsdb.core.DataPoint;
 import net.opentsdb.core.DataPoints;
 
-import com.google.common.collect.Range;
-
 /**
  * Wraps a {@link DataPoints} object and exposes the data consistent
  * with the {@link Doubles} interface.
@@ -31,7 +29,6 @@ import com.google.common.collect.Range;
  */
 public class DataPointsAsDoublesIter implements Doubles {
     private final Iterator<DataPoint> iterator;
-    private Range<Long> withinTimeRange;
     
     public DataPointsAsDoublesIter(final DataPoints points) {
         this.iterator = points.iterator();
