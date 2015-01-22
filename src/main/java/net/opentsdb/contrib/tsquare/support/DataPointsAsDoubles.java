@@ -35,13 +35,24 @@ public class DataPointsAsDoubles implements Doubles {
     private final Iterator<DataPoint> iterator;
     private final Range<Long> timeRange;
     
+    /**
+     * Iterates over all points, ignoring timestamps.
+     * 
+     * @param points
+     */
     public DataPointsAsDoubles(final DataPoints points) {
         this.iterator = points.iterator();
         this.timeRange = Range.all();
     }
     
-    public DataPointsAsDoubles(final DataPoints points, final Range<Long> withinTimeRange) {
-        this.timeRange = withinTimeRange;
+    /**
+     * Iterates over data points, returning only those with the given timestamp.
+     * 
+     * @param points
+     * @param withinMillisecondsRange timestamp range <i>in milliseconds</i>.
+     */
+    public DataPointsAsDoubles(final DataPoints points, final Range<Long> withinMillisecondsRange) {
+        this.timeRange = withinMillisecondsRange;
         
         Predicate<DataPoint> pred = new Predicate<DataPoint>() {
             public boolean apply(final DataPoint input) {
