@@ -70,6 +70,7 @@ public class GraphiteController extends AbstractController {
             @RequestParam(required=false) String until,
             @RequestParam(required=true) String format,
             @RequestParam(required=false) String noCache,
+            @RequestParam(required=false, defaultValue="false") boolean ms, // millisecond resolution?
             final WebRequest webReques) throws IOException {
         
         // We only return JSON for integration with dashboard projects.
@@ -97,7 +98,7 @@ public class GraphiteController extends AbstractController {
         }
         
         if ("json".equalsIgnoreCase(format)) {
-            model.setResponseWriter(new GraphiteJsonResponseWriter());
+            model.setResponseWriter(new GraphiteJsonResponseWriter(ms));
         } else if ("raw".equalsIgnoreCase(format)) {
             model.setResponseWriter(new GraphiteRawResponseWriter());
         } else {

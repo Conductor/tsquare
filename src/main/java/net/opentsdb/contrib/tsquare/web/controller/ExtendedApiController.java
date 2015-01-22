@@ -129,6 +129,7 @@ public class ExtendedApiController extends AbstractController {
             @RequestParam(required=false) String end,
             @RequestParam(required=false, defaultValue="false") boolean summarize,
             @RequestParam(required=false, defaultValue="ts") String format,
+            @RequestParam(required=false, defaultValue="false") boolean ms, // millisecond resolution?
             final WebRequest webRequest) throws IOException {
         
         final String[] inputMetricNames = webRequest.getParameterValues("m");
@@ -164,11 +165,11 @@ public class ExtendedApiController extends AbstractController {
         }
 
         if (summarize) {
-            model.setResponseWriter(new SummarizedJsonResponseWriter());
+            model.setResponseWriter(new SummarizedJsonResponseWriter(ms));
         } else if ("highcharts".equalsIgnoreCase(format)) {
-        	model.setResponseWriter(new HighchartsSeriesResponseWriter());
+        	model.setResponseWriter(new HighchartsSeriesResponseWriter(ms));
         } else {
-            final GraphiteJsonResponseWriter writer = new GraphiteJsonResponseWriter()
+            final GraphiteJsonResponseWriter writer = new GraphiteJsonResponseWriter(ms)
                 .setIncludeAggregatedTags(true)
                 .setIncludeAllTags(true)
                 .setSummarize(false);

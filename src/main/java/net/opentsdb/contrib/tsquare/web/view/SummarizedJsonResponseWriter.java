@@ -1,21 +1,27 @@
 package net.opentsdb.contrib.tsquare.web.view;
 
-import java.io.IOException;
-
-import net.opentsdb.contrib.tsquare.support.DataPointsAsDoubles;
-import net.opentsdb.contrib.tsquare.web.AnnotatedDataPoints;
-import net.opentsdb.core.Aggregator;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.google.common.collect.Range;
 
 import org.apache.commons.math3.stat.descriptive.StorelessUnivariateStatistic;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import net.opentsdb.contrib.tsquare.support.DataPointsAsDoubles;
+import net.opentsdb.contrib.tsquare.web.AnnotatedDataPoints;
+import net.opentsdb.core.Aggregator;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author James Royalty (jroyalty) <i>[Aug 30, 2013]</i>
  */
 public class SummarizedJsonResponseWriter extends AbstractJsonResponseWriter implements GroupedSeriesWriter {
+    public SummarizedJsonResponseWriter(final boolean millisecondResolution) {
+        super(millisecondResolution);
+    }
+    
     @Override
     public void beginResponse(ResponseContext context) throws IOException {
         super.beginResponse(context);
@@ -47,7 +53,7 @@ public class SummarizedJsonResponseWriter extends AbstractJsonResponseWriter imp
                 }
             }
             
-            final DataPointsAsDoubles doubles = new DataPointsAsDoubles(dps.getDataPoints(), dps.getQueryRangeInSeconds());
+            final DataPointsAsDoubles doubles = new DataPointsAsDoubles(dps.getDataPoints(), dps.getQueryRangeInMillis());
             final double aggValue = aggregator.runDouble(doubles);
             summarizer.increment(aggValue);
         }

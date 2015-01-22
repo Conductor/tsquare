@@ -56,21 +56,6 @@
 				<entry key="last">
 					<bean class="net.opentsdb.contrib.tsquare.LastValueAggregator" />
 				</entry>
-				<entry key="pct50">
-					<bean class="net.opentsdb.contrib.tsquare.PercentileAggregator">
-						<constructor-arg value="50.0" />
-					</bean>
-				</entry>
-				<entry key="pct90">
-					<bean class="net.opentsdb.contrib.tsquare.PercentileAggregator">
-						<constructor-arg value="90.0" />
-					</bean>
-				</entry>
-				<entry key="pct95">
-					<bean class="net.opentsdb.contrib.tsquare.PercentileAggregator">
-						<constructor-arg value="95.0" />
-					</bean>
-				</entry>
 			</map>
 		</property>
 	</bean>
@@ -90,19 +75,12 @@
 	</bean>
 	
 	<bean id="hbaseClient" class="org.hbase.async.HBaseClient" scope="singleton">
-		<constructor-arg value="#{environment['hbase.zkquorum']}" />
-		<constructor-arg value="#{environment['hbase.zkbasedir']}" />
+		<constructor-arg value="#{environment['tsd.storage.hbase.zk_quorum']}" />
+		<constructor-arg value="#{environment['tsd.storage.hbase.zk_basedir']}" />
 	</bean>
 	
-	<bean id="tsdb" class="net.opentsdb.core.TSDB" scope="singleton">
-		<constructor-arg ref="hbaseClient" />
-		<constructor-arg value="#{environment['tsdb.table']}" />
-		<constructor-arg value="#{environment['tsdb.uidtable']}" />
-	</bean>
+	<bean id="tsdb" class="net.opentsdb.contrib.tsquare.support.TsdbFactoryBean" scope="singleton" />
 	
-	<bean id="tsdbManager" class="net.opentsdb.core.ProvidedTsdbManager" scope="singleton">
-		<property name="tableName" value="#{environment['tsdb.table']}" />
-		<property name="uidTableName" value="#{environment['tsdb.uidtable']}" />
-	</bean>
+	<bean id="tsdbManager" class="net.opentsdb.core.ProvidedTsdbManager" scope="singleton" />
 	
 </beans>

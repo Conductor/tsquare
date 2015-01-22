@@ -17,6 +17,7 @@ package net.opentsdb.contrib.tsquare.web.view;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import net.opentsdb.contrib.tsquare.support.DataPointsAsDoubles;
 import net.opentsdb.contrib.tsquare.web.AnnotatedDataPoints;
@@ -36,6 +37,10 @@ public class GraphiteJsonResponseWriter extends AbstractJsonResponseWriter imple
     private boolean summarize = false;
     private boolean includeAllTags = false;
     private boolean includeAggregatedTags = false;
+    
+    public GraphiteJsonResponseWriter(final boolean millisecondResolution) {
+        super(millisecondResolution);
+    }
     
     @Override
     public void beginResponse(ResponseContext context) throws IOException {
@@ -87,7 +92,12 @@ public class GraphiteJsonResponseWriter extends AbstractJsonResponseWriter imple
                     jsonGenerator.writeNumber(p.doubleValue());
                 }
 
-                jsonGenerator.writeNumber(p.timestamp());
+                if (isMillisecondResolution()) {
+                    jsonGenerator.writeNumber(p.timestamp());
+                } else {
+                    jsonGenerator.writeNumber(TimeUnit.MILLISECONDS.toSeconds(p.timestamp()));
+                }
+                
                 jsonGenerator.writeEndArray();
             }
 
