@@ -15,14 +15,14 @@
  */
 package net.opentsdb.contrib.tsquare;
 
-import java.util.Collections;
-import java.util.Map;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.MoreObjects.ToStringHelper;
 
 import net.opentsdb.core.Aggregator;
 import net.opentsdb.core.Query;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Objects.ToStringHelper;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author James Royalty (jroyalty) <i>[Jun 13, 2013]</i>
@@ -59,7 +59,7 @@ public class Metric {
     
     @Override
     public String toString() {
-        final ToStringHelper helper = Objects.toStringHelper(this);
+        final ToStringHelper helper = MoreObjects.toStringHelper(this);
         helper.add("name", name).add("agg", aggregator);
         if (tags != null) {
             helper.add("tags", tags);
