@@ -46,9 +46,7 @@ public final class DataQueryView extends AbstractView {
         final DataQueryResponseWriter writer = modelObj.getResponseWriter();
         final ResponseContext context = new ResponseContext(request, response);
         
-        if (writer instanceof SteppedSeriesWriter) {
-            executeSteppedSeries((SteppedSeriesWriter) writer, modelObj, context);
-        } else if (writer instanceof GroupedSeriesWriter) {
+        if (writer instanceof GroupedSeriesWriter) {
             executeGroupedSeries((GroupedSeriesWriter) writer, modelObj, context);
         } else if (writer instanceof SingleSeriesWriter) {
             executeSingleSeries((SingleSeriesWriter) writer, modelObj, context);
@@ -125,21 +123,6 @@ public final class DataQueryView extends AbstractView {
                 groupedSeriesWriter.onError(context, ex);
             }
         }
-    }
-    
-    private void executeSteppedSeries(final SteppedSeriesWriter steppedSeriesWriter, final DataQueryModel modelObj, final ResponseContext context) throws IOException {
-        throw new UnsupportedOperationException("Not implemented yet!");
-//        try {
-//            steppedSeriesWriter.beginResponse(context);
-//            
-//            for (final AnnotatedDataQuery dataQuery : modelObj.getQueries()) {
-//                final DataPoints[] result = dataQuery.getQuery().run();
-//            }
-//
-//            steppedSeriesWriter.endResponse(context);
-//        } finally {
-//            steppedSeriesWriter.close(context);
-//        }
     }
     
     @Override
